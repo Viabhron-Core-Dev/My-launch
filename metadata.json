@@ -1,0 +1,6 @@
+{
+  "name": "MyLauncher",
+  "description": "Minimal Android Launcher",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
