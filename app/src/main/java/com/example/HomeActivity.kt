@@ -17,10 +17,14 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager2.widget.ViewPager2
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 data class AppInfo(
     val label: CharSequence,
-    val icon: Drawable,
+    val resolveInfo: ResolveInfo,
     val packageName: String,
     val activityName: String
 )
@@ -48,8 +52,6 @@ class HomeActivity : AppCompatActivity() {
 
         setupWallpaperBackground()
         loadInstalledApps()
-        setupViewPager()
-        setupDock()
 
         // Override back button (do nothing)
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
@@ -70,28 +72,31 @@ class HomeActivity : AppCompatActivity() {
     }
 
     private fun loadInstalledApps() {
-        val intent = Intent(Intent.ACTION_MAIN, null).apply {
-            addCategory(Intent.CATEGORY_LAUNCHER)
+        lifecycleScope.launch {
+            val loadedApps = withContext(Dispatchers.IO) {
+                val intent = Intent(Intent.ACTION_MAIN, null).apply {
+                    addCategory(Intent.CATEGORY_LAUNCHER)
+                }
+                val resolveInfos: List<ResolveInfo> = packageManager.queryIntentActivities(intent, 0)
+                resolveInfos.map { resolveInfo ->
+                    AppInfo(
+                        label = resolveInfo.loadLabel(packageManager),
+                        resolveInfo = resolveInfo,
+                        packageName = resolveInfo.activityInfo.packageName,
+                        activityName = resolveInfo.activityInfo.name
+                    )
+                }.sortedBy { it.label.toString() }
+            }
+            allApps.clear()
+            allApps.addAll(loadedApps)
+            setupViewPager()
+            setupDock()
         }
-        val resolveInfos: List<ResolveInfo> = packageManager.queryIntentActivities(intent, 0)
-        for (resolveInfo in resolveInfos) {
-            allApps.add(
-                AppInfo(
-                    label = resolveInfo.loadLabel(packageManager),
-                    icon = resolveInfo.loadIcon(packageManager),
-                    packageName = resolveInfo.activityInfo.packageName,
-                    activityName = resolveInfo.activityInfo.name
-                )
-            )
-        }
-        // Basic sort
-        allApps.sortBy { it.label.toString() }
     }
 
     private fun setupViewPager() {
-        // 3 pages
-        val pagesCount = 3
         val appsPerPage = 20 // 4 cols x 5 rows
+        val pagesCount = maxOf(1, (allApps.size + appsPerPage - 1) / appsPerPage)
 
         viewPager.adapter = object : RecyclerView.Adapter<PageViewHolder>() {
             override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PageViewHolder {
@@ -128,7 +133,7 @@ class HomeActivity : AppCompatActivity() {
         for (app in dockApps) {
             val dockIconView = layoutInflater.inflate(R.layout.item_dock_icon, dockContainer, false)
             val iconImage = dockIconView.findViewById<ImageView>(R.id.appIcon)
-            iconImage.setImageDrawable(app.icon)
+            iconImage.setImageDrawable(app.resolveInfo.loadIcon(packageManager))
             dockIconView.setOnClickListener {
                 launchApp(app)
             }
@@ -183,7 +188,7 @@ class HomeActivity : AppCompatActivity() {
 
         override fun onBindViewHolder(holder: AppViewHolder, position: Int) {
             val app = apps[position]
-            holder.icon.setImageDrawable(app.icon)
+            holder.icon.setImageDrawable(app.resolveInfo.loadIcon(packageManager))
             holder.name.text = app.label
         }
 
