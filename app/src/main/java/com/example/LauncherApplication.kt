@@ -1,4 +1,4 @@
-package com.example
+package com.aistudio.mylauncher.abcd
 
 import android.app.Application
 import android.os.Environment

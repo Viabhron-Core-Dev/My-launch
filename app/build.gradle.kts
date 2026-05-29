@@ -3,7 +3,7 @@ plugins {
 }
 
 android {
-  namespace = "com.example"
+  namespace = "com.aistudio.mylauncher.abcd"
   compileSdk = 35
 
   defaultConfig {
