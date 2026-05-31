@@ -39,6 +39,7 @@ class HomeActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         
         // Status bar and nav bar should remain visible
+        window.decorView.setBackgroundColor(android.graphics.Color.DKGRAY)
 
         setContentView(R.layout.activity_home)
 
@@ -71,8 +72,13 @@ class HomeActivity : AppCompatActivity() {
         try {
             val wallpaperManager = WallpaperManager.getInstance(this)
             val wallpaperDrawable = wallpaperManager.drawable
-            window.decorView.background = wallpaperDrawable
+            if (wallpaperDrawable != null) {
+                window.decorView.background = wallpaperDrawable
+            } else {
+                window.decorView.setBackgroundColor(android.graphics.Color.DKGRAY)
+            }
         } catch (e: Exception) {
+            window.decorView.setBackgroundColor(android.graphics.Color.DKGRAY)
             e.printStackTrace()
         }
     }
