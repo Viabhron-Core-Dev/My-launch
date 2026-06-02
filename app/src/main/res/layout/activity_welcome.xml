@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="32dp"
+    android:background="#121212">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Setup"
+        android:textSize="32sp"
+        android:textStyle="bold"
+        android:textColor="#FFFFFF"
+        android:layout_marginBottom="40dp"
+        android:layout_marginTop="32dp"/>
+
+    <!-- Step 1 Logger -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="24dp">
+        <TextView
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:text="✓"
+            android:gravity="center"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:textColor="#4CAF50"/>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Crash logger ready"
+            android:textSize="18sp"
+            android:textColor="#FFFFFF"
+            android:layout_marginStart="16dp"/>
+    </LinearLayout>
+
+    <!-- Step 2 Storage -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_marginBottom="24dp">
+        
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+            <TextView
+                android:id="@+id/iconStep2"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:text="2"
+                android:gravity="center"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:textColor="#AAAAAA"/>
+            <TextView
+                android:id="@+id/textStep2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Storage Permission"
+                android:textSize="18sp"
+                android:textColor="#FFFFFF"
+                android:layout_marginStart="16dp"/>
+        </LinearLayout>
+        
+        <Button
+            android:id="@+id/btnStorage"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Grant Storage Access"
+            android:layout_marginStart="48dp"
+            android:layout_marginTop="8dp"/>
+    </LinearLayout>
+
+    <!-- Step 3 Default Launcher -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_marginBottom="32dp">
+        
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+            <TextView
+                android:id="@+id/iconStep3"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:text="3"
+                android:gravity="center"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:textColor="#AAAAAA"/>
+            <TextView
+                android:id="@+id/textStep3"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Set Default Launcher"
+                android:textSize="18sp"
+                android:textColor="#FFFFFF"
+                android:layout_marginStart="16dp"/>
+        </LinearLayout>
+        
+        <Button
+            android:id="@+id/btnLauncher"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Set as Default Launcher"
+            android:layout_marginStart="48dp"
+            android:layout_marginTop="8dp"/>
+    </LinearLayout>
+
+    <Space
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"/>
+
+    <Button
+        android:id="@+id/btnContinue"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:text="Continue"
+        android:textSize="18sp"
+        android:layout_marginBottom="32dp" />
+</LinearLayout>

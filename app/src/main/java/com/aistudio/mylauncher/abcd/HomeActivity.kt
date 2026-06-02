@@ -56,6 +56,11 @@ class HomeActivity : AppCompatActivity() {
                 }
             }
         }
+        
+        fabSwitchLauncher.setOnLongClickListener {
+            startActivity(Intent(this, LogViewerActivity::class.java))
+            true
+        }
 
         setupWallpaperBackground()
         loadInstalledApps()
