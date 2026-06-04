@@ -21,52 +21,61 @@ class WelcomeActivity : AppCompatActivity() {
     private lateinit var btnLauncher: Button
     
     override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        
-        val sharedPrefs = getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
-        if (sharedPrefs.getBoolean("setup_complete", false)) {
-            startActivity(Intent(this, HomeActivity::class.java))
-            finish()
-            return
-        }
+        try {
+            super.onCreate(savedInstanceState)
+            
+            val sharedPrefs = getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+            if (sharedPrefs.getBoolean("setup_complete", false)) {
+                startActivity(Intent(this, HomeActivity::class.java))
+                finish()
+                return
+            }
 
-        setContentView(R.layout.activity_welcome)
-        
-        iconStep2 = findViewById(R.id.iconStep2)
-        btnStorage = findViewById(R.id.btnStorage)
-        
-        iconStep3 = findViewById(R.id.iconStep3)
-        btnLauncher = findViewById(R.id.btnLauncher)
-        
-        val btnContinue = findViewById<Button>(R.id.btnContinue)
-        
-        btnStorage.setOnClickListener {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                try {
-                    val intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION)
-                    intent.data = Uri.parse("package:$packageName")
-                    startActivity(intent)
-                } catch (e: Exception) {
-                    val intent = Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)
-                    startActivity(intent)
+            setContentView(R.layout.activity_welcome)
+            
+            iconStep2 = findViewById(R.id.iconStep2)
+            btnStorage = findViewById(R.id.btnStorage)
+            
+            iconStep3 = findViewById(R.id.iconStep3)
+            btnLauncher = findViewById(R.id.btnLauncher)
+            
+            val btnContinue = findViewById<Button>(R.id.btnContinue)
+            
+            btnStorage.setOnClickListener {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                    try {
+                        val intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION)
+                        intent.data = Uri.parse("package:$packageName")
+                        startActivity(intent)
+                    } catch (e: Exception) {
+                        val intent = Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)
+                        startActivity(intent)
+                    }
                 }
             }
-        }
-        
-        btnLauncher.setOnClickListener {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                val roleManager = getSystemService(RoleManager::class.java)
-                if (roleManager != null && roleManager.isRoleAvailable(RoleManager.ROLE_HOME)) {
-                    val intent = roleManager.createRequestRoleIntent(RoleManager.ROLE_HOME)
-                    startActivityForResult(intent, 1)
+            
+            btnLauncher.setOnClickListener {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    val roleManager = getSystemService(RoleManager::class.java)
+                    if (roleManager != null && roleManager.isRoleAvailable(RoleManager.ROLE_HOME)) {
+                        val intent = roleManager.createRequestRoleIntent(RoleManager.ROLE_HOME)
+                        startActivityForResult(intent, 1)
+                    }
                 }
             }
-        }
-        
-        btnContinue.setOnClickListener {
-            sharedPrefs.edit().putBoolean("setup_complete", true).apply()
-            startActivity(Intent(this, HomeActivity::class.java))
-            finish()
+            
+            btnContinue.setOnClickListener {
+                sharedPrefs.edit().putBoolean("setup_complete", true).apply()
+                startActivity(Intent(this, HomeActivity::class.java))
+                finish()
+            }
+        } catch (e: Exception) {
+            try {
+                val sw = java.io.StringWriter()
+                e.printStackTrace(java.io.PrintWriter(sw))
+                java.io.File(filesDir, "launcher_crash_latest.txt").writeText("WelcomeActivity onCreate crash:\n$sw")
+            } catch (ignored: Exception) {}
+            throw e
         }
     }
     

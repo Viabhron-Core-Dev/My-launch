@@ -14,14 +14,12 @@
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
-        android:supportsRtl="true"
-        android:theme="@style/Theme.MyLauncher">
+        android:supportsRtl="true">
 
         <activity
             android:name="com.aistudio.mylauncher.abcd.WelcomeActivity"
             android:exported="true"
-            android:label="@string/app_name"
-            android:theme="@style/Theme.MyLauncher">
+            android:label="@string/app_name">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -31,15 +29,13 @@
         <activity
             android:name="com.aistudio.mylauncher.abcd.LogViewerActivity"
             android:exported="false"
-            android:label="Log Viewer"
-            android:theme="@style/Theme.MyLauncher" />
+            android:label="Log Viewer" />
 
         <activity
             android:name="com.aistudio.mylauncher.abcd.HomeActivity"
             android:exported="true"
             android:launchMode="singleTask"
-            android:label="@string/app_name"
-            android:theme="@style/Theme.MyLauncher">
+            android:label="@string/app_name">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.HOME" />

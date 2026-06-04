@@ -19,16 +19,27 @@ class LauncherApplication : Application() {
     }
 
     override fun onCreate() {
-        super.onCreate()
-        
-        setupActivityRecorder()
         setupCrashHandler()
+        try {
+            super.onCreate()
+            setupActivityRecorder()
+        } catch (e: Exception) {
+            val sw = StringWriter()
+            val pw = PrintWriter(sw)
+            e.printStackTrace(pw)
+            val filesDir = filesDir
+            if (filesDir != null) {
+                if (!filesDir.exists()) filesDir.mkdirs()
+                File(filesDir, "launcher_crash_latest.txt").writeText("Application onCreate Crash:\n$sw")
+            }
+            throw e
+        }
     }
     
     private fun logEvent(message: String) {
         val timestamp = SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.US).format(Date())
         val logLine = "[$timestamp] $message\n"
-        val logFile = File(getExternalFilesDir(null), "launcher_log.txt")
+        val logFile = File(filesDir, "launcher_log.txt")
         
         try {
             if (logFile.exists() && logFile.length() > MAX_LOG_SIZE) {
@@ -66,7 +77,7 @@ class LauncherApplication : Application() {
         Thread.setDefaultUncaughtExceptionHandler { thread, exception ->
             try {
                 val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
-                val filesDir = getExternalFilesDir(null)
+                val filesDir = filesDir
                 
                 if (filesDir != null) {
                     if (!filesDir.exists()) {
