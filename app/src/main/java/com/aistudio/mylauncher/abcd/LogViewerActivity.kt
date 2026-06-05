@@ -5,11 +5,11 @@ import android.os.Bundle
 import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
+import androidx.activity.ComponentActivity
 import androidx.core.content.FileProvider
 import java.io.File
 
-class LogViewerActivity : AppCompatActivity() {
+class LogViewerActivity : ComponentActivity() {
 
     private lateinit var tvLogContent: TextView
     private var currentLogFile: File? = null

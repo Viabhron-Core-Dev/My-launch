@@ -13,7 +13,7 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.activity.OnBackPressedCallback
-import androidx.appcompat.app.AppCompatActivity
+import androidx.activity.ComponentActivity
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager2.widget.ViewPager2
@@ -29,7 +29,7 @@ data class AppInfo(
     val activityName: String
 )
 
-class HomeActivity : AppCompatActivity() {
+class HomeActivity : ComponentActivity() {
 
     private lateinit var viewPager: ViewPager2
     private lateinit var dockContainer: LinearLayout
@@ -40,6 +40,7 @@ class HomeActivity : AppCompatActivity() {
         
         // Status bar and nav bar should remain visible
         window.decorView.setBackgroundColor(android.graphics.Color.DKGRAY)
+        window.setBackgroundDrawableResource(android.R.color.darker_gray)
 
         setContentView(R.layout.activity_home)
 

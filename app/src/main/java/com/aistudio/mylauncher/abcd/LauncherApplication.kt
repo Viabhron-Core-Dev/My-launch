@@ -19,19 +19,18 @@ class LauncherApplication : Application() {
     }
 
     override fun onCreate() {
-        setupCrashHandler()
         try {
             super.onCreate()
+            setupCrashHandler()
             setupActivityRecorder()
         } catch (e: Exception) {
             val sw = StringWriter()
             val pw = PrintWriter(sw)
             e.printStackTrace(pw)
-            val filesDir = filesDir
-            if (filesDir != null) {
-                if (!filesDir.exists()) filesDir.mkdirs()
-                File(filesDir, "launcher_crash_latest.txt").writeText("Application onCreate Crash:\n$sw")
-            }
+            val fallbackDir = File("/data/data/com.aistudio.mylauncher.abcd/files/")
+            val dir = try { filesDir ?: fallbackDir } catch (ex: Exception) { fallbackDir }
+            if (!dir.exists()) dir.mkdirs()
+            File(dir, "launcher_crash_latest.txt").writeText("Application onCreate Crash:\n$sw")
             throw e
         }
     }
@@ -39,7 +38,10 @@ class LauncherApplication : Application() {
     private fun logEvent(message: String) {
         val timestamp = SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.US).format(Date())
         val logLine = "[$timestamp] $message\n"
-        val logFile = File(filesDir, "launcher_log.txt")
+        val fallbackDir = File("/data/data/com.aistudio.mylauncher.abcd/files/")
+        val dir = try { filesDir ?: fallbackDir } catch (ex: Exception) { fallbackDir }
+        if (!dir.exists()) dir.mkdirs()
+        val logFile = File(dir, "launcher_log.txt")
         
         try {
             if (logFile.exists() && logFile.length() > MAX_LOG_SIZE) {
@@ -77,51 +79,50 @@ class LauncherApplication : Application() {
         Thread.setDefaultUncaughtExceptionHandler { thread, exception ->
             try {
                 val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
-                val filesDir = filesDir
+                val fallbackDir = File("/data/data/com.aistudio.mylauncher.abcd/files/")
+                val dir = try { filesDir ?: fallbackDir } catch (ex: Exception) { fallbackDir }
                 
-                if (filesDir != null) {
-                    if (!filesDir.exists()) {
-                        filesDir.mkdirs()
-                    }
-                    
-                    val crashFile = File(filesDir, "launcher_crash_$timestamp.txt")
-                    val latestCrashFile = File(filesDir, "launcher_crash_latest.txt")
-                    
-                    val sw = StringWriter()
-                    val pw = PrintWriter(sw)
-                    exception.printStackTrace(pw)
-                    val stackTrace = sw.toString()
-                    
-                    val version = try {
-                        packageManager.getPackageInfo(packageName, 0).versionName
-                    } catch (e: Exception) {
-                        "Unknown"
-                    }
-                    
-                    val logFile = File(filesDir, "launcher_log.txt")
-                    val recentLogs = if (logFile.exists()) {
-                        val lines = logFile.readLines()
-                        lines.takeLast(50).joinToString("\n")
-                    } else {
-                        "No recent log available."
-                    }
-                    
-                    val crashLogContent = """
-                        |Timestamp: $timestamp
-                        |Device: ${Build.MANUFACTURER} ${Build.MODEL}
-                        |Android Version: ${Build.VERSION.RELEASE} (API ${Build.VERSION.SDK_INT})
-                        |App Version: $version
-                        |
-                        |Recent Logs (Last 50 Lines):
-                        |$recentLogs
-                        |
-                        |Stack Trace:
-                        |$stackTrace
-                    """.trimMargin()
-                    
-                    crashFile.writeText(crashLogContent)
-                    latestCrashFile.writeText(crashLogContent)
+                if (!dir.exists()) {
+                    dir.mkdirs()
                 }
+                
+                val crashFile = File(dir, "launcher_crash_$timestamp.txt")
+                val latestCrashFile = File(dir, "launcher_crash_latest.txt")
+                
+                val sw = StringWriter()
+                val pw = PrintWriter(sw)
+                exception.printStackTrace(pw)
+                val stackTrace = sw.toString()
+                
+                val version = try {
+                    packageManager.getPackageInfo(packageName, 0).versionName
+                } catch (e: Exception) {
+                    "Unknown"
+                }
+                
+                val logFile = File(dir, "launcher_log.txt")
+                val recentLogs = if (logFile.exists()) {
+                    val lines = logFile.readLines()
+                    lines.takeLast(50).joinToString("\n")
+                } else {
+                    "No recent log available."
+                }
+                
+                val crashLogContent = """
+                    |Timestamp: $timestamp
+                    |Device: ${Build.MANUFACTURER} ${Build.MODEL}
+                    |Android Version: ${Build.VERSION.RELEASE} (API ${Build.VERSION.SDK_INT})
+                    |App Version: $version
+                    |
+                    |Recent Logs (Last 50 Lines):
+                    |$recentLogs
+                    |
+                    |Stack Trace:
+                    |$stackTrace
+                """.trimMargin()
+                
+                crashFile.writeText(crashLogContent)
+                latestCrashFile.writeText(crashLogContent)
             } catch (e: Exception) {
                 Log.e("LauncherCrash", "Failed to write crash log", e)
             } finally {

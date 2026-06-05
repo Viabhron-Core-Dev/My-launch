@@ -10,9 +10,9 @@ import android.os.Environment
 import android.provider.Settings
 import android.widget.Button
 import android.widget.TextView
-import androidx.appcompat.app.AppCompatActivity
+import androidx.activity.ComponentActivity
 
-class WelcomeActivity : AppCompatActivity() {
+class WelcomeActivity : ComponentActivity() {
 
     private lateinit var iconStep2: TextView
     private lateinit var btnStorage: Button
