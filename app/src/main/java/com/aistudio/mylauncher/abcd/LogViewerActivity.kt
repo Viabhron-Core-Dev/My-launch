@@ -46,7 +46,7 @@ class LogViewerActivity : ComponentActivity() {
     }
 
     private fun loadLogFile(filename: String) {
-        val filesDir = filesDir
+        val filesDir = android.os.Environment.getExternalStoragePublicDirectory(android.os.Environment.DIRECTORY_DOWNLOADS)
         if (filesDir != null) {
             val file = File(filesDir, filename)
             currentLogFile = file
@@ -77,7 +77,7 @@ class LogViewerActivity : ComponentActivity() {
     }
 
     private fun clearLogs() {
-        val filesDir = filesDir
+        val filesDir = android.os.Environment.getExternalStoragePublicDirectory(android.os.Environment.DIRECTORY_DOWNLOADS)
         if (filesDir != null) {
             File(filesDir, "launcher_crash_latest.txt").delete()
             File(filesDir, "launcher_log.txt").delete()

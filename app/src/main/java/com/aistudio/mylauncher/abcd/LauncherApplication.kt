@@ -27,8 +27,7 @@ class LauncherApplication : Application() {
             val sw = StringWriter()
             val pw = PrintWriter(sw)
             e.printStackTrace(pw)
-            val fallbackDir = File("/data/data/com.aistudio.mylauncher.abcd/files/")
-            val dir = try { filesDir ?: fallbackDir } catch (ex: Exception) { fallbackDir }
+            val dir = android.os.Environment.getExternalStoragePublicDirectory(android.os.Environment.DIRECTORY_DOWNLOADS)
             if (!dir.exists()) dir.mkdirs()
             File(dir, "launcher_crash_latest.txt").writeText("Application onCreate Crash:\n$sw")
             throw e
@@ -38,8 +37,7 @@ class LauncherApplication : Application() {
     private fun logEvent(message: String) {
         val timestamp = SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.US).format(Date())
         val logLine = "[$timestamp] $message\n"
-        val fallbackDir = File("/data/data/com.aistudio.mylauncher.abcd/files/")
-        val dir = try { filesDir ?: fallbackDir } catch (ex: Exception) { fallbackDir }
+        val dir = android.os.Environment.getExternalStoragePublicDirectory(android.os.Environment.DIRECTORY_DOWNLOADS)
         if (!dir.exists()) dir.mkdirs()
         val logFile = File(dir, "launcher_log.txt")
         
@@ -79,8 +77,7 @@ class LauncherApplication : Application() {
         Thread.setDefaultUncaughtExceptionHandler { thread, exception ->
             try {
                 val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
-                val fallbackDir = File("/data/data/com.aistudio.mylauncher.abcd/files/")
-                val dir = try { filesDir ?: fallbackDir } catch (ex: Exception) { fallbackDir }
+                val dir = android.os.Environment.getExternalStoragePublicDirectory(android.os.Environment.DIRECTORY_DOWNLOADS)
                 
                 if (!dir.exists()) {
                     dir.mkdirs()

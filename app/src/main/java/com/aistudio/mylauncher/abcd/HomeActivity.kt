@@ -16,7 +16,6 @@ import androidx.activity.OnBackPressedCallback
 import androidx.activity.ComponentActivity
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import androidx.viewpager2.widget.ViewPager2
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -31,7 +30,7 @@ data class AppInfo(
 
 class HomeActivity : ComponentActivity() {
 
-    private lateinit var viewPager: ViewPager2
+    private lateinit var recyclerView: RecyclerView
     private lateinit var dockContainer: LinearLayout
     private val allApps = mutableListOf<AppInfo>()
 
@@ -44,7 +43,8 @@ class HomeActivity : ComponentActivity() {
 
         setContentView(R.layout.activity_home)
 
-        viewPager = findViewById(R.id.viewPager)
+        recyclerView = findViewById(R.id.recyclerView)
+        recyclerView.layoutManager = GridLayoutManager(this, 4)
         dockContainer = findViewById(R.id.dockContainer)
 
         val fabSwitchLauncher = findViewById<com.google.android.material.floatingactionbutton.FloatingActionButton>(R.id.fabSwitchLauncher)
@@ -107,42 +107,14 @@ class HomeActivity : ComponentActivity() {
             }
             allApps.clear()
             allApps.addAll(loadedApps)
-            setupViewPager()
+            setupRecyclerView()
             setupDock()
         }
     }
 
-    private fun setupViewPager() {
-        val appsPerPage = 20 // 4 cols x 5 rows
-        val pagesCount = maxOf(1, (allApps.size + appsPerPage - 1) / appsPerPage)
-
-        viewPager.adapter = object : RecyclerView.Adapter<PageViewHolder>() {
-            override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PageViewHolder {
-                val rv = RecyclerView(parent.context).apply {
-                    layoutParams = ViewGroup.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        ViewGroup.LayoutParams.MATCH_PARENT
-                    )
-                    layoutManager = GridLayoutManager(parent.context, 4)
-                    // Optional padding
-                    setPadding(16, 32, 16, 16)
-                    clipToPadding = false
-                }
-                return PageViewHolder(rv)
-            }
-
-            override fun onBindViewHolder(holder: PageViewHolder, position: Int) {
-                val startIndex = position * appsPerPage
-                val endIndex = minOf(startIndex + appsPerPage, allApps.size)
-                val pageApps = if (startIndex < allApps.size) {
-                    allApps.subList(startIndex, endIndex)
-                } else {
-                    emptyList()
-                }
-                holder.bind(pageApps)
-            }
-
-            override fun getItemCount() = pagesCount
+    private fun setupRecyclerView() {
+        recyclerView.adapter = AppGridAdapter(allApps) { appInfo ->
+            launchApp(appInfo)
         }
     }
 
@@ -168,14 +140,6 @@ class HomeActivity : ComponentActivity() {
             }
         } catch (e: Exception) {
             e.printStackTrace()
-        }
-    }
-
-    inner class PageViewHolder(private val recyclerView: RecyclerView) : RecyclerView.ViewHolder(recyclerView) {
-        fun bind(apps: List<AppInfo>) {
-            recyclerView.adapter = AppGridAdapter(apps) { appInfo ->
-                launchApp(appInfo)
-            }
         }
     }
 
