@@ -31,15 +31,15 @@
     </LinearLayout>
 
     <!-- Floating Action Button for Switch Launcher -->
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
+    <ImageButton
         android:id="@+id/fabSwitchLauncher"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
         android:layout_margin="16dp"
-        app:fabSize="mini"
         android:contentDescription="Set Default Launcher"
         android:tooltipText="Set Default Launcher"
-        app:srcCompat="@android:drawable/ic_menu_compass"
+        android:src="@android:drawable/ic_menu_compass"
+        android:background="?android:attr/selectableItemBackgroundBorderless"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintBottom_toTopOf="@+id/dockContainer" />
 

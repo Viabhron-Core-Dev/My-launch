@@ -47,7 +47,7 @@ class HomeActivity : ComponentActivity() {
         recyclerView.layoutManager = GridLayoutManager(this, 4)
         dockContainer = findViewById(R.id.dockContainer)
 
-        val fabSwitchLauncher = findViewById<com.google.android.material.floatingactionbutton.FloatingActionButton>(R.id.fabSwitchLauncher)
+        val fabSwitchLauncher = findViewById<android.widget.ImageButton>(R.id.fabSwitchLauncher)
         fabSwitchLauncher.setOnClickListener {
             if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
                 val roleManager = getSystemService(android.app.role.RoleManager::class.java)
