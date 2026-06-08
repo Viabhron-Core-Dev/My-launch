@@ -65,7 +65,7 @@ class WelcomeActivity : ComponentActivity() {
             }
             
             btnContinue.setOnClickListener {
-                sharedPrefs.edit().putBoolean("setup_complete", true).apply()
+                sharedPrefs.edit().putBoolean("setup_complete", true).commit()
                 startActivity(Intent(this, HomeActivity::class.java))
                 finish()
             }

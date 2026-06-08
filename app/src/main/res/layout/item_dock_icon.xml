@@ -4,9 +4,7 @@
     android:layout_weight="1"
     android:layout_height="match_parent"
     android:gravity="center"
-    android:background="?attr/selectableItemBackgroundBorderless"
-    android:clickable="true"
-    android:focusable="true">
+    android:background="@android:color/transparent">
 
     <ImageView
         android:id="@+id/appIcon"

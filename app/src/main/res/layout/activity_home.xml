@@ -39,7 +39,7 @@
         android:contentDescription="Set Default Launcher"
         android:tooltipText="Set Default Launcher"
         android:src="@android:drawable/ic_menu_compass"
-        android:background="?android:attr/selectableItemBackgroundBorderless"
+        android:background="@android:color/transparent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintBottom_toTopOf="@+id/dockContainer" />
 
