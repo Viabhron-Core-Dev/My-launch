@@ -9,6 +9,8 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.Window
+import android.view.WindowManager
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -35,6 +37,8 @@ class HomeActivity : ComponentActivity() {
     private val allApps = mutableListOf<AppInfo>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        requestWindowFeature(Window.FEATURE_NO_TITLE)
+        window.addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
         super.onCreate(savedInstanceState)
         
         // Status bar and nav bar should remain visible
@@ -49,6 +53,7 @@ class HomeActivity : ComponentActivity() {
 
         val fabSwitchLauncher = findViewById<android.widget.ImageButton>(R.id.fabSwitchLauncher)
         fabSwitchLauncher.setOnClickListener {
+            android.util.Log.d("LauncherFAB", "FAB tapped")
             if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
                 val roleManager = getSystemService(android.app.role.RoleManager::class.java)
                 if (roleManager != null && roleManager.isRoleAvailable(android.app.role.RoleManager.ROLE_HOME)) {
@@ -59,6 +64,7 @@ class HomeActivity : ComponentActivity() {
         }
         
         fabSwitchLauncher.setOnLongClickListener {
+            android.util.Log.d("LauncherFAB", "FAB long pressed")
             startActivity(Intent(this, LogViewerActivity::class.java))
             true
         }
