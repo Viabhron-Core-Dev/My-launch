@@ -18,6 +18,8 @@ class LauncherApplication : Application() {
         const val MAX_LOG_SIZE = 1024 * 1024 // 1MB
     }
 
+    val database by lazy { LauncherDatabase.getDatabase(this) }
+
     override fun onCreate() {
         try {
             super.onCreate()
