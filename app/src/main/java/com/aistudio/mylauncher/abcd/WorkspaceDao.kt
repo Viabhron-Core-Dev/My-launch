@@ -28,13 +28,13 @@ interface WorkspaceDao {
     suspend fun getAllForContainer(container: Int): List<WorkspaceItem>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insert(folder: FolderInfo): Long
+    suspend fun insertFolder(folder: FolderInfo): Long
 
     @Update
-    suspend fun update(folder: FolderInfo)
+    suspend fun updateFolder(folder: FolderInfo)
 
     @Delete
-    suspend fun delete(folder: FolderInfo)
+    suspend fun deleteFolder(folder: FolderInfo)
 
     @Query("SELECT * FROM folder_info")
     suspend fun getAllFolders(): List<FolderInfo>
@@ -43,10 +43,10 @@ interface WorkspaceDao {
     suspend fun getFolderById(id: Long): FolderInfo?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insert(appPreference: AppPreference)
+    suspend fun insertAppPreference(appPreference: AppPreference)
 
     @Update
-    suspend fun update(appPreference: AppPreference)
+    suspend fun updateAppPreference(appPreference: AppPreference)
 
     @Query("SELECT * FROM app_preferences WHERE packageName = :packageName LIMIT 1")
     suspend fun getAppPreference(packageName: String): AppPreference?
