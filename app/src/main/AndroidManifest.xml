@@ -27,6 +27,11 @@
         </activity>
 
         <activity
+            android:name="com.aistudio.mylauncher.abcd.SettingsActivity"
+            android:exported="false"
+            android:label="Settings" />
+
+        <activity
             android:name="com.aistudio.mylauncher.abcd.LogViewerActivity"
             android:exported="false"
             android:label="Log Viewer" />

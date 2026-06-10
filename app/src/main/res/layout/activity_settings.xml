@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#121212">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <!-- Grid Settings -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Grid Settings"
+            android:textColor="#FFFFFF"
+            android:textStyle="bold"
+            android:textSize="18sp"
+            android:layout_marginBottom="8dp"/>
+
+        <TextView
+            android:id="@+id/textColumns"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Grid columns: 4"
+            android:textColor="#FFFFFF"
+            android:layout_marginBottom="8dp"/>
+            
+        <SeekBar
+            android:id="@+id/seekColumns"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"/>
+
+        <TextView
+            android:id="@+id/textRows"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Grid rows per page: 5"
+            android:textColor="#FFFFFF"
+            android:layout_marginBottom="8dp"/>
+            
+        <SeekBar
+            android:id="@+id/seekRows"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="24dp"/>
+
+        <!-- Dock Settings -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Dock Settings"
+            android:textColor="#FFFFFF"
+            android:textStyle="bold"
+            android:textSize="18sp"
+            android:layout_marginBottom="8dp"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Dock icon count:"
+            android:textColor="#FFFFFF"/>
+            
+        <RadioGroup
+            android:id="@+id/rgDockCount"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="8dp">
+
+            <RadioButton
+                android:id="@+id/rbDock4"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="4"
+                android:textColor="#FFFFFF"/>
+
+            <RadioButton
+                android:id="@+id/rbDock5"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="5"
+                android:textColor="#FFFFFF"
+                android:layout_marginStart="16dp"/>
+        </RadioGroup>
+
+        <Switch
+            android:id="@+id/switchDockDivider"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Show dock divider"
+            android:textColor="#FFFFFF"
+            android:layout_marginBottom="24dp"/>
+
+        <!-- Icon Settings -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Icon Settings"
+            android:textColor="#FFFFFF"
+            android:textStyle="bold"
+            android:textSize="18sp"
+            android:layout_marginBottom="8dp"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Icon size:"
+            android:textColor="#FFFFFF"/>
+            
+        <RadioGroup
+            android:id="@+id/rgIconSize"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginBottom="24dp">
+
+            <RadioButton
+                android:id="@+id/rbIconSmall"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Small"
+                android:textColor="#FFFFFF"/>
+
+            <RadioButton
+                android:id="@+id/rbIconMedium"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Medium"
+                android:textColor="#FFFFFF"/>
+                
+            <RadioButton
+                android:id="@+id/rbIconLarge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Large"
+                android:textColor="#FFFFFF"/>
+        </RadioGroup>
+
+        <!-- About Settings -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="About"
+            android:textColor="#FFFFFF"
+            android:textStyle="bold"
+            android:textSize="18sp"
+            android:layout_marginBottom="8dp"/>
+
+        <TextView
+            android:id="@+id/textVersion"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="App version: 1.0"
+            android:textColor="#FFFFFF"
+            android:layout_marginBottom="16dp"/>
+
+        <Button
+            android:id="@+id/btnClearSetup"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Clear setup flag"
+            android:backgroundTint="#333333"
+            android:textColor="#FFFFFF"/>
+
+    </LinearLayout>
+</ScrollView>

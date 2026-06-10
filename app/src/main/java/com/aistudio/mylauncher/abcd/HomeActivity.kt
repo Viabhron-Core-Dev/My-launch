@@ -54,13 +54,7 @@ class HomeActivity : ComponentActivity() {
         val fabSwitchLauncher = findViewById<android.widget.ImageButton>(R.id.fabSwitchLauncher)
         fabSwitchLauncher.setOnClickListener {
             android.util.Log.d("LauncherFAB", "FAB tapped")
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
-                val roleManager = getSystemService(android.app.role.RoleManager::class.java)
-                if (roleManager != null && roleManager.isRoleAvailable(android.app.role.RoleManager.ROLE_HOME)) {
-                    val intent = roleManager.createRequestRoleIntent(android.app.role.RoleManager.ROLE_HOME)
-                    startActivityForResult(intent, 0)
-                }
-            }
+            startActivity(Intent(this, SettingsActivity::class.java))
         }
         
         fabSwitchLauncher.setOnLongClickListener {
