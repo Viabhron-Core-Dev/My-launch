@@ -28,10 +28,12 @@ class SettingsActivity : ComponentActivity() {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
                 val value = progress + 3
                 textColumns.text = "Grid columns: $value"
-                prefs.edit().putInt("grid_columns", value).apply()
             }
             override fun onStartTrackingTouch(seekBar: SeekBar?) {}
-            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {
+                val value = (seekBar?.progress ?: 0) + 3
+                prefs.edit().putInt("grid_columns", value).apply()
+            }
         })
 
         // Grid Rows
@@ -45,10 +47,12 @@ class SettingsActivity : ComponentActivity() {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
                 val value = progress + 4
                 textRows.text = "Grid rows per page: $value"
-                prefs.edit().putInt("grid_rows", value).apply()
             }
             override fun onStartTrackingTouch(seekBar: SeekBar?) {}
-            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {
+                val value = (seekBar?.progress ?: 0) + 4
+                prefs.edit().putInt("grid_rows", value).apply()
+            }
         })
 
         // Dock Icon Count
