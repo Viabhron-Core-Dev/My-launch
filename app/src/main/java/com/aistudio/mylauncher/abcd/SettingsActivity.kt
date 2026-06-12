@@ -13,6 +13,8 @@ import androidx.activity.ComponentActivity
 class SettingsActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        window.statusBarColor = android.graphics.Color.BLACK
+        window.navigationBarColor = android.graphics.Color.BLACK
         setContentView(R.layout.activity_settings)
 
         val prefs = getSharedPreferences("launcher_prefs", Context.MODE_PRIVATE)

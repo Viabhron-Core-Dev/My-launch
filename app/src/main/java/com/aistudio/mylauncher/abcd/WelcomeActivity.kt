@@ -23,6 +23,8 @@ class WelcomeActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         try {
             super.onCreate(savedInstanceState)
+            window.statusBarColor = android.graphics.Color.BLACK
+            window.navigationBarColor = android.graphics.Color.BLACK
             
             val sharedPrefs = getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
             if (sharedPrefs.getBoolean("setup_complete", false)) {

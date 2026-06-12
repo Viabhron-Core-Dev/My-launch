@@ -16,6 +16,8 @@ class LogViewerActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        window.statusBarColor = android.graphics.Color.BLACK
+        window.navigationBarColor = android.graphics.Color.BLACK
         setContentView(R.layout.activity_log_viewer)
 
         tvLogContent = findViewById(R.id.tvLogContent)
