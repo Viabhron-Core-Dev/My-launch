@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/appDrawer"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#1a1a1a"
+    android:padding="16dp"
+    android:clickable="true"
+    android:focusable="true"
+    android:visibility="gone">
+
+    <EditText
+        android:id="@+id/drawerSearchInput"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:background="#2a2a2a"
+        android:hint="Search apps..."
+        android:textColorHint="#888888"
+        android:textColor="#FFFFFF"
+        android:paddingHorizontal="16dp"
+        android:maxLines="1"
+        android:singleLine="true"
+        android:imeOptions="actionSearch"
+        android:layout_marginBottom="16dp" />
+
+    <TextView
+        android:id="@+id/drawerFoldersHeader"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Folders"
+        android:textColor="#FFFFFF"
+        android:textStyle="bold"
+        android:textSize="18sp"
+        android:layout_marginBottom="8dp"
+        android:visibility="gone" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/drawerRecyclerView"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+
+</LinearLayout>

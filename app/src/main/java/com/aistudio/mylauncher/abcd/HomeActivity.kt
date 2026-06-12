@@ -24,6 +24,13 @@ import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import android.text.Editable
+import android.text.TextWatcher
+import android.view.GestureDetector
+import android.view.MotionEvent
+import android.widget.EditText
+import android.view.inputmethod.InputMethodManager
+import android.content.Context
 
 data class AppInfo(
     val label: CharSequence,
@@ -37,6 +44,13 @@ class HomeActivity : ComponentActivity() {
     private lateinit var recyclerView: RecyclerView
     private lateinit var dockContainer: LinearLayout
     private val allApps = mutableListOf<AppInfo>()
+
+    private lateinit var drawerRoot: View
+    private lateinit var drawerRecyclerView: RecyclerView
+    private lateinit var drawerSearchInput: EditText
+    private lateinit var gestureDetector: GestureDetector
+    private var isDrawerOpen = false
+    private val drawerApps = mutableListOf<AppInfo>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         requestWindowFeature(Window.FEATURE_NO_TITLE)
@@ -73,13 +87,124 @@ class HomeActivity : ComponentActivity() {
 
         setupWallpaperBackground()
         loadInstalledApps()
+        setupDrawer()
 
         // Override back button (do nothing)
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
-                // Do nothing
+                if (isDrawerOpen) {
+                    closeDrawer()
+                }
             }
         })
+    }
+
+    private fun setupDrawer() {
+        drawerRoot = findViewById(R.id.appDrawerInclude)
+        drawerRecyclerView = findViewById(R.id.drawerRecyclerView)
+        drawerSearchInput = findViewById(R.id.drawerSearchInput)
+
+        drawerRecyclerView.layoutManager = GridLayoutManager(this, 4)
+
+        drawerRoot.post {
+            drawerRoot.translationY = drawerRoot.height.toFloat()
+        }
+
+        drawerSearchInput.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                filterDrawerApps(s.toString())
+            }
+            override fun afterTextChanged(s: Editable?) {}
+        })
+
+        gestureDetector = GestureDetector(this, object : GestureDetector.SimpleOnGestureListener() {
+            private val SWIPE_THRESHOLD = 100
+            private val SWIPE_VELOCITY_THRESHOLD = 100
+
+            override fun onFling(
+                e1: MotionEvent?, e2: MotionEvent,
+                velocityX: Float, velocityY: Float
+            ): Boolean {
+                if (e1 == null) return false
+                val diffY = e2.y - e1.y
+                val diffX = e2.x - e1.x
+                if (Math.abs(diffY) > Math.abs(diffX)) {
+                    if (Math.abs(diffY) > SWIPE_THRESHOLD && Math.abs(velocityY) > SWIPE_VELOCITY_THRESHOLD) {
+                        if (diffY < 0 && !isDrawerOpen) {
+                            openDrawer()
+                            return true
+                        } else if (diffY > 0 && isDrawerOpen) {
+                            closeDrawer()
+                            return true
+                        }
+                    }
+                }
+                return false
+            }
+        })
+
+        drawerRoot.setOnClickListener {
+            closeDrawer()
+        }
+        
+        drawerSearchInput.setOnClickListener { }
+        drawerRecyclerView.setOnClickListener { }
+    }
+
+    override fun dispatchTouchEvent(ev: MotionEvent): Boolean {
+        if (gestureDetector.onTouchEvent(ev)) {
+            return true
+        }
+        return super.dispatchTouchEvent(ev)
+    }
+
+    private fun openDrawer() {
+        isDrawerOpen = true
+        drawerSearchInput.setText("")
+        filterDrawerApps("")
+        drawerRoot.visibility = View.VISIBLE
+        drawerRoot.animate()
+            .translationY(0f)
+            .setDuration(250)
+            .start()
+    }
+
+    private fun closeDrawer() {
+        isDrawerOpen = false
+        drawerRoot.animate()
+            .translationY(drawerRoot.height.toFloat())
+            .setDuration(250)
+            .withEndAction {
+                drawerRoot.visibility = View.GONE
+            }
+            .start()
+        
+        val view = this.currentFocus
+        if (view != null) {
+            val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+            imm.hideSoftInputFromWindow(view.windowToken, 0)
+        }
+    }
+
+    private fun filterDrawerApps(query: String) {
+        val q = query.lowercase()
+        drawerApps.clear()
+        if (q.isEmpty()) {
+            drawerApps.addAll(allApps)
+        } else {
+            drawerApps.addAll(allApps.filter {
+                it.label.toString().lowercase().contains(q)
+            })
+        }
+        if (drawerRecyclerView.adapter == null) {
+            drawerRecyclerView.adapter = AppGridAdapter(drawerApps) { appInfo ->
+                launchApp(appInfo)
+                closeDrawer()
+            }
+        } else {
+            drawerRecyclerView.adapter?.notifyDataSetChanged()
+        }
     }
 
     private fun setupWallpaperBackground() {
