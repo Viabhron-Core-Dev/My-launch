@@ -26,8 +26,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import android.text.Editable
 import android.text.TextWatcher
-import android.view.GestureDetector
-import android.view.MotionEvent
 import android.widget.EditText
 import android.view.inputmethod.InputMethodManager
 import android.content.Context
@@ -48,7 +46,6 @@ class HomeActivity : ComponentActivity() {
     private lateinit var drawerRoot: View
     private lateinit var drawerRecyclerView: RecyclerView
     private lateinit var drawerSearchInput: EditText
-    private lateinit var gestureDetector: GestureDetector
     private var isDrawerOpen = false
     private val drawerApps = mutableListOf<AppInfo>()
 
@@ -118,65 +115,8 @@ class HomeActivity : ComponentActivity() {
             override fun afterTextChanged(s: Editable?) {}
         })
 
-        gestureDetector = GestureDetector(this, object : GestureDetector.SimpleOnGestureListener() {
-            private val SWIPE_THRESHOLD = 100
-            private val SWIPE_VELOCITY_THRESHOLD = 100
-
-            override fun onFling(
-                e1: MotionEvent?, e2: MotionEvent,
-                velocityX: Float, velocityY: Float
-            ): Boolean {
-                if (e1 == null) return false
-                val diffY = e2.y - e1.y
-                val diffX = e2.x - e1.x
-                if (Math.abs(diffY) > Math.abs(diffX)) {
-                    if (Math.abs(diffY) > SWIPE_THRESHOLD && Math.abs(velocityY) > SWIPE_VELOCITY_THRESHOLD) {
-                        if (diffY < 0 && !isDrawerOpen) {
-                            openDrawer()
-                            return true
-                        } else if (diffY > 0 && isDrawerOpen) {
-                            closeDrawer()
-                            return true
-                        }
-                    }
-                }
-                return false
-            }
-        })
-
-        drawerRoot.setOnClickListener {
-            closeDrawer()
-        }
-        
         drawerSearchInput.setOnClickListener { }
         drawerRecyclerView.setOnClickListener { }
-    }
-
-    private var touchStartedInRecycler = false
-
-    override fun dispatchTouchEvent(ev: MotionEvent): Boolean {
-        if (ev.action == MotionEvent.ACTION_DOWN) {
-            if (isDrawerOpen) {
-                val location = IntArray(2)
-                drawerRecyclerView.getLocationOnScreen(location)
-                val left = location[0]
-                val top = location[1]
-                val right = left + drawerRecyclerView.width
-                val bottom = top + drawerRecyclerView.height
-                touchStartedInRecycler = ev.rawX >= left && ev.rawX <= right && ev.rawY >= top && ev.rawY <= bottom
-            } else {
-                touchStartedInRecycler = false
-            }
-        }
-
-        if (isDrawerOpen && touchStartedInRecycler) {
-            return super.dispatchTouchEvent(ev)
-        } else {
-            if (gestureDetector.onTouchEvent(ev)) {
-                return true
-            }
-            return super.dispatchTouchEvent(ev)
-        }
     }
 
     private fun openDrawer() {
@@ -272,15 +212,35 @@ class HomeActivity : ComponentActivity() {
     }
 
     private fun setupDock() {
-        val dockApps = allApps.take(4)
-        for (app in dockApps) {
-            val dockIconView = layoutInflater.inflate(R.layout.item_dock_icon, dockContainer, false)
-            val iconImage = dockIconView.findViewById<ImageView>(R.id.appIcon)
-            iconImage.setImageDrawable(app.resolveInfo.loadIcon(packageManager))
-            dockIconView.setOnClickListener {
-                launchApp(app)
+        dockContainer.removeAllViews()
+
+        var appIndex = 0
+        val totalSlots = 5
+
+        for (i in 0 until totalSlots) {
+            if (i == 2) {
+                // Center toggle
+                val dockIconView = layoutInflater.inflate(R.layout.item_dock_icon, dockContainer, false)
+                val iconImage = dockIconView.findViewById<ImageView>(R.id.appIcon)
+                iconImage.setImageResource(android.R.drawable.ic_menu_more)
+                dockIconView.setOnClickListener {
+                    openDrawer()
+                }
+                dockContainer.addView(dockIconView)
+            } else {
+                if (appIndex < allApps.size) {
+                    val app = allApps[appIndex]
+                    appIndex++
+                    
+                    val dockIconView = layoutInflater.inflate(R.layout.item_dock_icon, dockContainer, false)
+                    val iconImage = dockIconView.findViewById<ImageView>(R.id.appIcon)
+                    iconImage.setImageDrawable(app.resolveInfo.loadIcon(packageManager))
+                    dockIconView.setOnClickListener {
+                        launchApp(app)
+                    }
+                    dockContainer.addView(dockIconView)
+                }
             }
-            dockContainer.addView(dockIconView)
         }
     }
 
