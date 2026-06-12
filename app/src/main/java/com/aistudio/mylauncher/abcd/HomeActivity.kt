@@ -196,7 +196,7 @@ class HomeActivity : ComponentActivity() {
             .translationY(drawerRoot.height.toFloat())
             .setDuration(250)
             .withEndAction {
-                drawerRoot.visibility = View.GONE
+                drawerRoot.visibility = View.INVISIBLE
             }
             .start()
         

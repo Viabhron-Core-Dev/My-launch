@@ -9,7 +9,7 @@
     android:padding="16dp"
     android:clickable="true"
     android:focusable="true"
-    android:visibility="gone">
+    android:visibility="invisible">
 
     <EditText
         android:id="@+id/drawerSearchInput"
