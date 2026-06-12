@@ -152,11 +152,31 @@ class HomeActivity : ComponentActivity() {
         drawerRecyclerView.setOnClickListener { }
     }
 
+    private var touchStartedInRecycler = false
+
     override fun dispatchTouchEvent(ev: MotionEvent): Boolean {
-        if (gestureDetector.onTouchEvent(ev)) {
-            return true
+        if (ev.action == MotionEvent.ACTION_DOWN) {
+            if (isDrawerOpen) {
+                val location = IntArray(2)
+                drawerRecyclerView.getLocationOnScreen(location)
+                val left = location[0]
+                val top = location[1]
+                val right = left + drawerRecyclerView.width
+                val bottom = top + drawerRecyclerView.height
+                touchStartedInRecycler = ev.rawX >= left && ev.rawX <= right && ev.rawY >= top && ev.rawY <= bottom
+            } else {
+                touchStartedInRecycler = false
+            }
         }
-        return super.dispatchTouchEvent(ev)
+
+        if (isDrawerOpen && touchStartedInRecycler) {
+            return super.dispatchTouchEvent(ev)
+        } else {
+            if (gestureDetector.onTouchEvent(ev)) {
+                return true
+            }
+            return super.dispatchTouchEvent(ev)
+        }
     }
 
     private fun openDrawer() {
