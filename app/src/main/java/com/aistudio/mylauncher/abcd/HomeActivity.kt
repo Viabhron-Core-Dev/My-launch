@@ -29,6 +29,8 @@ import android.text.TextWatcher
 import android.widget.EditText
 import android.view.inputmethod.InputMethodManager
 import android.content.Context
+import androidx.viewpager2.widget.ViewPager2
+import android.graphics.drawable.GradientDrawable
 
 data class AppInfo(
     val label: CharSequence,
@@ -39,7 +41,8 @@ data class AppInfo(
 
 class HomeActivity : ComponentActivity() {
 
-    private lateinit var recyclerView: RecyclerView
+    private lateinit var viewPager: ViewPager2
+    private lateinit var pageIndicatorContainer: LinearLayout
     private lateinit var dockContainer: LinearLayout
     private val allApps = mutableListOf<AppInfo>()
 
@@ -59,8 +62,8 @@ class HomeActivity : ComponentActivity() {
 
         setContentView(R.layout.activity_home)
 
-        recyclerView = findViewById(R.id.recyclerView)
-        recyclerView.layoutManager = GridLayoutManager(this, 4)
+        viewPager = findViewById(R.id.viewPager)
+        pageIndicatorContainer = findViewById(R.id.pageIndicatorContainer)
         dockContainer = findViewById(R.id.dockContainer)
 
         ViewCompat.setOnApplyWindowInsetsListener(dockContainer) { view, insets ->
@@ -199,15 +202,123 @@ class HomeActivity : ComponentActivity() {
             }
             allApps.clear()
             allApps.addAll(loadedApps)
-            setupRecyclerView()
-            setupDock()
+
+            val appInfoMap = loadedApps.associateBy { Pair(it.packageName, it.activityName) }
+
+            withContext(Dispatchers.IO) {
+                val db = LauncherDatabase.getDatabase(this@HomeActivity)
+                val dao = db.workspaceDao()
+                val sharedPrefs = getSharedPreferences("launcher_prefs", Context.MODE_PRIVATE)
+                val gridCols = sharedPrefs.getInt("grid_columns", 4)
+                val gridRows = sharedPrefs.getInt("grid_rows", 5)
+
+                var items = dao.getAllForContainer(0)
+                if (items.isEmpty()) {
+                    val newItems = mutableListOf<WorkspaceItem>()
+                    var pIndex = 0
+                    var cX = 0
+                    var cY = 0
+                    loadedApps.forEach { app ->
+                        newItems.add(
+                            WorkspaceItem(
+                                itemType = 0,
+                                container = 0,
+                                containerId = -1L,
+                                packageName = app.packageName,
+                                activityName = app.activityName,
+                                title = app.label.toString(),
+                                customIconPath = "",
+                                appWidgetId = -1,
+                                spanX = 1,
+                                spanY = 1,
+                                cellX = cX,
+                                cellY = cY,
+                                pageIndex = pIndex
+                            )
+                        )
+                        cX++
+                        if (cX >= gridCols) {
+                            cX = 0
+                            cY++
+                            if (cY >= gridRows) {
+                                cY = 0
+                                pIndex++
+                            }
+                        }
+                    }
+                    newItems.forEach { dao.insert(it) }
+                    items = dao.getAllForContainer(0)
+                }
+
+                val pagesMap = items.groupBy { it.pageIndex }
+                val maxPage = if (pagesMap.isEmpty()) 0 else pagesMap.keys.maxOrNull() ?: 0
+                val pageItemsList = mutableListOf<List<WorkspaceItem?>>()
+                val pageSize = gridCols * gridRows
+
+                for (p in 0..maxPage) {
+                    val pageItems = MutableList<WorkspaceItem?>(pageSize) { null }
+                    pagesMap[p]?.forEach { item ->
+                        val index = item.cellY * gridCols + item.cellX
+                        if (index in 0 until pageSize) {
+                            pageItems[index] = item
+                        }
+                    }
+                    pageItemsList.add(pageItems)
+                }
+
+                withContext(Dispatchers.Main) {
+                    setupViewPager(pageItemsList, appInfoMap, gridCols)
+                    setupDock()
+                }
+            }
         }
     }
 
-    private fun setupRecyclerView() {
-        recyclerView.adapter = AppGridAdapter(allApps) { appInfo ->
+    private fun setupViewPager(
+        pageItemsList: List<List<WorkspaceItem?>>,
+        appInfoMap: Map<Pair<String, String>, AppInfo>,
+        gridCols: Int
+    ) {
+        viewPager.adapter = HomePageAdapter(pageItemsList, appInfoMap, gridCols) { appInfo ->
             launchApp(appInfo)
         }
+        setupPageIndicators(pageItemsList.size)
+        viewPager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
+            override fun onPageSelected(position: Int) {
+                updatePageIndicators(position)
+            }
+        })
+    }
+
+    private fun setupPageIndicators(count: Int) {
+        pageIndicatorContainer.removeAllViews()
+        val dots = arrayOfNulls<ImageView>(count)
+        for (i in 0 until count) {
+            dots[i] = ImageView(this)
+            val size = resources.displayMetrics.density * 8
+            val margin = resources.displayMetrics.density * 4
+            val params = LinearLayout.LayoutParams(size.toInt(), size.toInt())
+            params.setMargins(margin.toInt(), 0, margin.toInt(), 0)
+            dots[i]?.layoutParams = params
+            dots[i]?.setImageDrawable(createDotDrawable(i == 0))
+            pageIndicatorContainer.addView(dots[i])
+        }
+    }
+
+    private fun updatePageIndicators(position: Int) {
+        val count = pageIndicatorContainer.childCount
+        for (i in 0 until count) {
+            val dot = pageIndicatorContainer.getChildAt(i) as ImageView
+            dot.setImageDrawable(createDotDrawable(i == position))
+        }
+    }
+
+    private fun createDotDrawable(isActive: Boolean): Drawable {
+        val drawable = GradientDrawable()
+        drawable.shape = GradientDrawable.OVAL
+        drawable.setColor(if (isActive) android.graphics.Color.WHITE else android.graphics.Color.LTGRAY)
+        drawable.alpha = if (isActive) 255 else 128
+        return drawable
     }
 
     private fun setupDock() {
