@@ -55,10 +55,7 @@ class HomeActivity : ComponentActivity() {
         
         window.statusBarColor = android.graphics.Color.BLACK
         window.navigationBarColor = android.graphics.Color.BLACK
-        
-        // Status bar and nav bar should remain visible
-        window.decorView.setBackgroundColor(android.graphics.Color.DKGRAY)
-        window.setBackgroundDrawableResource(android.R.color.darker_gray)
+        androidx.core.view.WindowCompat.setDecorFitsSystemWindows(window, true)
 
         setContentView(R.layout.activity_home)
 
