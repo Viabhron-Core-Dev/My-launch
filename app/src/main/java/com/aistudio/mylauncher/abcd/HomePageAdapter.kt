@@ -12,6 +12,7 @@ class HomePageAdapter(
     private val pageItemsList: List<List<WorkspaceItem?>>,
     private val appInfoMap: Map<Pair<String, String>, AppInfo>,
     private val gridColumns: Int,
+    private val gridRows: Int,
     private val onClick: (AppInfo) -> Unit
 ) : RecyclerView.Adapter<HomePageAdapter.PageViewHolder>() {
 
@@ -31,7 +32,7 @@ class HomePageAdapter(
 
     override fun onBindViewHolder(holder: PageViewHolder, position: Int) {
         val itemsForPage = pageItemsList[position]
-        holder.recyclerView.adapter = HomeGridAdapter(itemsForPage, appInfoMap, onClick)
+        holder.recyclerView.adapter = HomeGridAdapter(itemsForPage, appInfoMap, gridRows, onClick)
     }
 
     override fun getItemCount(): Int = pageItemsList.size
@@ -40,6 +41,7 @@ class HomePageAdapter(
 class HomeGridAdapter(
     private val items: List<WorkspaceItem?>,
     private val appInfoMap: Map<Pair<String, String>, AppInfo>,
+    private val gridRows: Int,
     private val onClick: (AppInfo) -> Unit
 ) : RecyclerView.Adapter<HomeGridAdapter.CellViewHolder>() {
 
@@ -66,7 +68,33 @@ class HomeGridAdapter(
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): CellViewHolder {
         val view = LayoutInflater.from(parent.context)
             .inflate(R.layout.item_app_icon, parent, false)
-        return CellViewHolder(view)
+        val holder = CellViewHolder(view)
+        
+        val setHeight = {
+            if (parent.height > 0) {
+                val cellHeight = parent.height / gridRows
+                if (view.layoutParams.height != cellHeight) {
+                    view.layoutParams.height = cellHeight
+                    view.requestLayout()
+                }
+            }
+        }
+        
+        if (parent.height > 0) {
+            setHeight()
+        } else {
+            parent.viewTreeObserver.addOnPreDrawListener(object : android.view.ViewTreeObserver.OnPreDrawListener {
+                override fun onPreDraw(): Boolean {
+                    if (parent.height > 0) {
+                        parent.viewTreeObserver.removeOnPreDrawListener(this)
+                        setHeight()
+                    }
+                    return true
+                }
+            })
+        }
+
+        return holder
     }
 
     override fun onBindViewHolder(holder: CellViewHolder, position: Int) {

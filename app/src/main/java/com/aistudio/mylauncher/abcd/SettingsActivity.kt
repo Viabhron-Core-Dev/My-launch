@@ -10,11 +10,43 @@ import android.widget.Switch
 import android.widget.TextView
 import androidx.activity.ComponentActivity
 import android.app.AlertDialog
+import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
+import java.io.File
+import java.io.FileOutputStream
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class SettingsActivity : ComponentActivity() {
+
+    private val wallpaperPickerLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        if (uri != null) {
+            lifecycleScope.launch(Dispatchers.IO) {
+                try {
+                    val inputStream = contentResolver.openInputStream(uri)
+                    val file = File(filesDir, "custom_wallpaper.jpg")
+                    val outputStream = FileOutputStream(file)
+                    inputStream?.copyTo(outputStream)
+                    inputStream?.close()
+                    outputStream.close()
+                    
+                    getSharedPreferences("launcher_prefs", Context.MODE_PRIVATE)
+                        .edit()
+                        .putString("custom_wallpaper_path", file.absolutePath)
+                        .apply()
+                        
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(this@SettingsActivity, "Custom wallpaper set. Returning to home...", Toast.LENGTH_SHORT).show()
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         window.statusBarColor = android.graphics.Color.BLACK
@@ -126,6 +158,23 @@ class SettingsActivity : ComponentActivity() {
                 }
                 .setNegativeButton("Cancel", null)
                 .show()
+        }
+
+        val btnSetWallpaper = findViewById<Button>(R.id.btnSetWallpaper)
+        btnSetWallpaper.setOnClickListener {
+            wallpaperPickerLauncher.launch("image/*")
+        }
+        btnSetWallpaper.setOnLongClickListener {
+            val launcherPrefs = getSharedPreferences("launcher_prefs", Context.MODE_PRIVATE)
+            val path = launcherPrefs.getString("custom_wallpaper_path", null)
+            if (path != null) {
+                File(path).delete()
+                launcherPrefs.edit().remove("custom_wallpaper_path").apply()
+                Toast.makeText(this, "Custom wallpaper cleared", Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(this, "No custom wallpaper to clear", Toast.LENGTH_SHORT).show()
+            }
+            true
         }
     }
 }

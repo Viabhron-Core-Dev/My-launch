@@ -193,17 +193,60 @@ class HomeActivity : ComponentActivity() {
     }
 
     private fun setupWallpaperBackground() {
-        try {
-            val wallpaperManager = WallpaperManager.getInstance(this)
-            val wallpaperDrawable = wallpaperManager.drawable
-            if (wallpaperDrawable != null) {
-                window.decorView.background = wallpaperDrawable
-            } else {
-                window.decorView.setBackgroundColor(android.graphics.Color.DKGRAY)
+        lifecycleScope.launch(Dispatchers.IO) {
+            val prefs = getSharedPreferences("launcher_prefs", Context.MODE_PRIVATE)
+            val customPath = prefs.getString("custom_wallpaper_path", null)
+            if (customPath != null) {
+                val file = java.io.File(customPath)
+                if (file.exists()) {
+                    try {
+                        val options = android.graphics.BitmapFactory.Options()
+                        options.inJustDecodeBounds = true
+                        android.graphics.BitmapFactory.decodeFile(customPath, options)
+                        
+                        val metrics = resources.displayMetrics
+                        val reqWidth = metrics.widthPixels
+                        val reqHeight = metrics.heightPixels
+                        
+                        var inSampleSize = 1
+                        if (options.outHeight > reqHeight || options.outWidth > reqWidth) {
+                            val halfHeight: Int = options.outHeight / 2
+                            val halfWidth: Int = options.outWidth / 2
+                            while (halfHeight / inSampleSize >= reqHeight && halfWidth / inSampleSize >= reqWidth) {
+                                inSampleSize *= 2
+                            }
+                        }
+                        
+                        options.inJustDecodeBounds = false
+                        options.inSampleSize = inSampleSize
+                        val bitmap = android.graphics.BitmapFactory.decodeFile(customPath, options)
+                        if (bitmap != null) {
+                            val drawable = android.graphics.drawable.BitmapDrawable(resources, bitmap)
+                            withContext(Dispatchers.Main) {
+                                window.decorView.background = drawable
+                            }
+                            return@launch
+                        }
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+                }
             }
-        } catch (e: Exception) {
-            window.decorView.setBackgroundColor(android.graphics.Color.DKGRAY)
-            e.printStackTrace()
+            
+            withContext(Dispatchers.Main) {
+                try {
+                    val wallpaperManager = WallpaperManager.getInstance(this@HomeActivity)
+                    val wallpaperDrawable = wallpaperManager.drawable
+                    if (wallpaperDrawable != null) {
+                        window.decorView.background = wallpaperDrawable
+                    } else {
+                        window.decorView.setBackgroundColor(android.graphics.Color.DKGRAY)
+                    }
+                } catch (e: Exception) {
+                    window.decorView.setBackgroundColor(android.graphics.Color.DKGRAY)
+                    e.printStackTrace()
+                }
+            }
         }
     }
 
@@ -337,7 +380,7 @@ class HomeActivity : ComponentActivity() {
                 }
 
                 withContext(Dispatchers.Main) {
-                    setupViewPager(pageItemsList, appInfoMap, gridCols)
+                    setupViewPager(pageItemsList, appInfoMap, gridCols, gridRows)
                     setupDock()
                 }
             }
@@ -347,9 +390,10 @@ class HomeActivity : ComponentActivity() {
     private fun setupViewPager(
         pageItemsList: List<List<WorkspaceItem?>>,
         appInfoMap: Map<Pair<String, String>, AppInfo>,
-        gridCols: Int
+        gridCols: Int,
+        gridRows: Int
     ) {
-        viewPager.adapter = HomePageAdapter(pageItemsList, appInfoMap, gridCols) { appInfo ->
+        viewPager.adapter = HomePageAdapter(pageItemsList, appInfoMap, gridCols, gridRows) { appInfo ->
             launchApp(appInfo)
         }
         setupPageIndicators(pageItemsList.size)
