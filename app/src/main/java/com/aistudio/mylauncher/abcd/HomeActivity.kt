@@ -98,6 +98,29 @@ class HomeActivity : ComponentActivity() {
         })
     }
 
+    override fun onResume() {
+        super.onResume()
+        val sharedPrefs = getSharedPreferences("launcher_prefs", Context.MODE_PRIVATE)
+        val gridCols = sharedPrefs.getInt("grid_columns", 4)
+        val gridRows = sharedPrefs.getInt("grid_rows", 5)
+        val lastCols = sharedPrefs.getInt("last_grid_columns", -1)
+        val lastRows = sharedPrefs.getInt("last_grid_rows", -1)
+
+        if (lastCols != -1 && lastRows != -1 && (gridCols != lastCols || gridRows != lastRows)) {
+            lifecycleScope.launch {
+                withContext(Dispatchers.IO) {
+                    val db = LauncherDatabase.getDatabase(this@HomeActivity)
+                    db.workspaceDao().clearHomeScreen()
+                    sharedPrefs.edit()
+                        .putInt("last_grid_columns", gridCols)
+                        .putInt("last_grid_rows", gridRows)
+                        .apply()
+                }
+                loadInstalledApps() // Reloads and re-seeds
+            }
+        }
+    }
+
     private fun setupDrawer() {
         drawerRoot = findViewById(R.id.appDrawerInclude)
         drawerRecyclerView = findViewById(R.id.drawerRecyclerView)
@@ -215,40 +238,87 @@ class HomeActivity : ComponentActivity() {
                 var items = dao.getAllForContainer(0)
                 if (items.isEmpty()) {
                     val newItems = mutableListOf<WorkspaceItem>()
-                    var pIndex = 0
+                    val page0Apps = listOf(
+                        "com.android.chrome",
+                        "com.anthropic.claude",
+                        "com.whatsapp",
+                        "com.android.vending",
+                        "com.google.android.apps.docs",
+                        "ai.perplexity.app.android",
+                        "com.facebook.stella"
+                    )
+                    val page1Apps = listOf(
+                        "org.mozilla.firefox"
+                    )
+
                     var cX = 0
                     var cY = 0
-                    loadedApps.forEach { app ->
-                        newItems.add(
-                            WorkspaceItem(
-                                itemType = 0,
-                                container = 0,
-                                containerId = -1L,
-                                packageName = app.packageName,
-                                activityName = app.activityName,
-                                title = app.label.toString(),
-                                customIconPath = "",
-                                appWidgetId = -1,
-                                spanX = 1,
-                                spanY = 1,
-                                cellX = cX,
-                                cellY = cY,
-                                pageIndex = pIndex
+                    for (pkg in page0Apps) {
+                        val app = loadedApps.find { it.packageName == pkg }
+                        if (app != null) {
+                            newItems.add(
+                                WorkspaceItem(
+                                    itemType = 0,
+                                    container = 0,
+                                    containerId = -1L,
+                                    packageName = app.packageName,
+                                    activityName = app.activityName,
+                                    title = app.label.toString(),
+                                    customIconPath = "",
+                                    appWidgetId = -1,
+                                    spanX = 1,
+                                    spanY = 1,
+                                    cellX = cX,
+                                    cellY = cY,
+                                    pageIndex = 0
+                                )
                             )
-                        )
-                        cX++
-                        if (cX >= gridCols) {
-                            cX = 0
-                            cY++
-                            if (cY >= gridRows) {
-                                cY = 0
-                                pIndex++
+                            cX++
+                            if (cX >= gridCols) {
+                                cX = 0
+                                cY++
                             }
                         }
                     }
+
+                    cX = 0
+                    cY = 0
+                    for (pkg in page1Apps) {
+                        val app = loadedApps.find { it.packageName == pkg }
+                        if (app != null) {
+                            newItems.add(
+                                WorkspaceItem(
+                                    itemType = 0,
+                                    container = 0,
+                                    containerId = -1L,
+                                    packageName = app.packageName,
+                                    activityName = app.activityName,
+                                    title = app.label.toString(),
+                                    customIconPath = "",
+                                    appWidgetId = -1,
+                                    spanX = 1,
+                                    spanY = 1,
+                                    cellX = cX,
+                                    cellY = cY,
+                                    pageIndex = 1
+                                )
+                            )
+                            cX++
+                            if (cX >= gridCols) {
+                                cX = 0
+                                cY++
+                            }
+                        }
+                    }
+                    
                     newItems.forEach { dao.insert(it) }
                     items = dao.getAllForContainer(0)
                 }
+
+                sharedPrefs.edit()
+                    .putInt("last_grid_columns", gridCols)
+                    .putInt("last_grid_rows", gridRows)
+                    .apply()
 
                 val pagesMap = items.groupBy { it.pageIndex }
                 val maxPage = if (pagesMap.isEmpty()) 0 else pagesMap.keys.maxOrNull() ?: 0

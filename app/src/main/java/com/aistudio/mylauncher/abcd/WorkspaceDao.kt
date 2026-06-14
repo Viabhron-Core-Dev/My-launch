@@ -27,6 +27,9 @@ interface WorkspaceDao {
     @Query("SELECT * FROM workspace_items WHERE container = :container")
     suspend fun getAllForContainer(container: Int): List<WorkspaceItem>
 
+    @Query("DELETE FROM workspace_items WHERE container = 0")
+    suspend fun clearHomeScreen()
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertFolder(folder: FolderInfo): Long
 

@@ -9,6 +9,10 @@ import android.widget.SeekBar
 import android.widget.Switch
 import android.widget.TextView
 import androidx.activity.ComponentActivity
+import android.app.AlertDialog
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class SettingsActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -107,6 +111,21 @@ class SettingsActivity : ComponentActivity() {
             
             // Finish this activity to go back to HomeActivity
             finish()
+        }
+
+        val btnClearHomeScreen = findViewById<Button>(R.id.btnClearHomeScreen)
+        btnClearHomeScreen.setOnClickListener {
+            AlertDialog.Builder(this)
+                .setTitle("Clear home screen?")
+                .setMessage("All home screen icons will be removed. Apps remain in the drawer.")
+                .setPositiveButton("Clear") { _, _ ->
+                    lifecycleScope.launch(Dispatchers.IO) {
+                        val db = LauncherDatabase.getDatabase(this@SettingsActivity)
+                        db.workspaceDao().clearHomeScreen()
+                    }
+                }
+                .setNegativeButton("Cancel", null)
+                .show()
         }
     }
 }

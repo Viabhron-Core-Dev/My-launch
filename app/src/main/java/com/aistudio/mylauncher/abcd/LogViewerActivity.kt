@@ -26,6 +26,8 @@ class LogViewerActivity : ComponentActivity() {
         val btnRunningLog = findViewById<Button>(R.id.btnRunningLog)
         val btnShare = findViewById<Button>(R.id.btnShare)
         val btnClear = findViewById<Button>(R.id.btnClear)
+        val btnCopyLog = findViewById<Button>(R.id.btnCopyLog)
+        val btnSaveLog = findViewById<Button>(R.id.btnSaveLog)
 
         btnCrashLog.setOnClickListener {
             loadLogFile("launcher_crash_latest.txt")
@@ -41,6 +43,31 @@ class LogViewerActivity : ComponentActivity() {
 
         btnClear.setOnClickListener {
             clearLogs()
+        }
+
+        btnCopyLog.setOnClickListener {
+            val cm = getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+            val clip = android.content.ClipData.newPlainText("Launcher Log", tvLogContent.text)
+            cm.setPrimaryClip(clip)
+            Toast.makeText(this, "Log copied to clipboard", Toast.LENGTH_SHORT).show()
+        }
+
+        btnSaveLog.setOnClickListener {
+            val text = tvLogContent.text.toString()
+            if (text.isNotBlank()) {
+                val timestamp = System.currentTimeMillis()
+                val filename = "launcher_log_$timestamp.txt"
+                val dir = android.os.Environment.getExternalStoragePublicDirectory(android.os.Environment.DIRECTORY_DOWNLOADS)
+                if (dir != null) {
+                    val file = File(dir, filename)
+                    file.writeText(text)
+                    Toast.makeText(this, "Saved: $filename", Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(this, "Could not access Downloads directory", Toast.LENGTH_SHORT).show()
+                }
+            } else {
+                Toast.makeText(this, "Nothing to save", Toast.LENGTH_SHORT).show()
+            }
         }
 
         // Load running log by default
