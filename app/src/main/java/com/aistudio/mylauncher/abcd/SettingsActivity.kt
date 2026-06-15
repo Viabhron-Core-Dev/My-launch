@@ -65,6 +65,8 @@ class SettingsActivity : ComponentActivity() {
         window.navigationBarColor = android.graphics.Color.BLACK
         setContentView(R.layout.activity_settings)
 
+        loadHiddenApps()
+
         val prefs = getSharedPreferences("launcher_prefs", Context.MODE_PRIVATE)
 
         // Grid Columns
@@ -196,6 +198,55 @@ class SettingsActivity : ComponentActivity() {
                 Toast.makeText(this, "No custom wallpaper to clear", Toast.LENGTH_SHORT).show()
             }
             true
+        }
+    }
+
+    private fun loadHiddenApps() {
+        lifecycleScope.launch(Dispatchers.IO) {
+            val db = LauncherDatabase.getDatabase(this@SettingsActivity)
+            val dao = db.workspaceDao()
+            val hiddenApps = dao.getHiddenApps()
+            
+            withContext(Dispatchers.Main) {
+                val container = findViewById<android.widget.LinearLayout>(R.id.containerHiddenApps)
+                container.removeAllViews()
+                
+                if (hiddenApps.isEmpty()) {
+                    val tv = android.widget.TextView(this@SettingsActivity).apply {
+                        text = "No hidden apps"
+                        setTextColor(android.graphics.Color.WHITE)
+                    }
+                    container.addView(tv)
+                } else {
+                    val pm = packageManager
+                    for (appTarget in hiddenApps) {
+                        try {
+                            val ai = pm.getApplicationInfo(appTarget.packageName, 0)
+                            val label = pm.getApplicationLabel(ai).toString()
+                            
+                            val view = layoutInflater.inflate(R.layout.item_hidden_app, container, false)
+                            view.findViewById<android.widget.TextView>(R.id.hiddenAppName).text = label
+                            view.findViewById<android.widget.Button>(R.id.btnUnhide).setOnClickListener {
+                                AppLogger.d("SettingsActivity", "Unhiding ${appTarget.packageName}")
+                                unhideApp(appTarget)
+                            }
+                            container.addView(view)
+                        } catch (e: Exception) {
+                            // package not found
+                            AppLogger.e("SettingsActivity", "Package not found for hidden app: ${appTarget.packageName}", e)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private fun unhideApp(appPref: AppPreference) {
+        lifecycleScope.launch(Dispatchers.IO) {
+            val db = LauncherDatabase.getDatabase(this@SettingsActivity)
+            val dao = db.workspaceDao()
+            dao.updateAppPreference(appPref.copy(isHidden = false))
+            loadHiddenApps()
         }
     }
 }

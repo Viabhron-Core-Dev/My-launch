@@ -1,4 +1,5 @@
 package com.aistudio.mylauncher.abcd
+// debug-v15
 
 import android.app.WallpaperManager
 import android.content.Intent
@@ -51,6 +52,7 @@ class HomeActivity : ComponentActivity() {
     private lateinit var drawerSearchInput: EditText
     private var isDrawerOpen = false
     private val drawerApps = mutableListOf<AppInfo>()
+    private val hiddenAppsCache = mutableSetOf<String>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         AppLogger.d("HomeActivity", "STARTED: HomeActivity")
@@ -156,12 +158,24 @@ class HomeActivity : ComponentActivity() {
         AppLogger.d("Drawer", "Drawer opened")
         isDrawerOpen = true
         drawerSearchInput.setText("")
-        filterDrawerApps("")
-        drawerRoot.visibility = View.VISIBLE
-        drawerRoot.animate()
-            .translationY(0f)
-            .setDuration(250)
-            .start()
+        
+        lifecycleScope.launch(Dispatchers.IO) {
+            val db = LauncherDatabase.getDatabase(this@HomeActivity)
+            val hiddenPrefs = db.workspaceDao().getHiddenApps()
+            val hiddenPackageNames = hiddenPrefs.map { it.packageName }.toSet()
+            
+            withContext(Dispatchers.Main) {
+                hiddenAppsCache.clear()
+                hiddenAppsCache.addAll(hiddenPackageNames)
+                filterDrawerApps("")
+                
+                drawerRoot.visibility = View.VISIBLE
+                drawerRoot.animate()
+                    .translationY(0f)
+                    .setDuration(250)
+                    .start()
+            }
+        }
     }
 
     private fun closeDrawer() {
@@ -185,10 +199,13 @@ class HomeActivity : ComponentActivity() {
     private fun filterDrawerApps(query: String) {
         val q = query.lowercase()
         drawerApps.clear()
+        
+        val visibleApps = allApps.filter { it.packageName !in hiddenAppsCache }
+        
         if (q.isEmpty()) {
-            drawerApps.addAll(allApps)
+            drawerApps.addAll(visibleApps)
         } else {
-            drawerApps.addAll(allApps.filter {
+            drawerApps.addAll(visibleApps.filter {
                 it.label.toString().lowercase().contains(q)
             })
         }
@@ -504,6 +521,79 @@ class HomeActivity : ComponentActivity() {
         }
     }
 
+    private fun showAppContextMenu(app: AppInfo) {
+        AppLogger.d("Drawer", "Long-press context menu shown for ${app.packageName}")
+        val options = arrayOf("App info", "Uninstall", "Pause", "Hide from drawer")
+        android.app.AlertDialog.Builder(this)
+            .setTitle(app.label)
+            .setItems(options) { _, which ->
+                when (which) {
+                    0 -> { // App info
+                        AppLogger.d("Drawer", "App info requested for ${app.packageName}")
+                        try {
+                            val intent = Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                                data = android.net.Uri.fromParts("package", app.packageName, null)
+                            }
+                            startActivity(intent)
+                        } catch (e: Exception) {
+                            AppLogger.e("Drawer", "Failed to open app info for ${app.packageName}", e)
+                        }
+                        closeDrawer()
+                    }
+                    1 -> { // Uninstall
+                        AppLogger.d("Drawer", "Uninstall requested for ${app.packageName}")
+                        try {
+                            val intent = Intent(Intent.ACTION_DELETE).apply {
+                                data = android.net.Uri.fromParts("package", app.packageName, null)
+                            }
+                            startActivity(intent)
+                        } catch (e: Exception) {
+                            AppLogger.e("Drawer", "Failed to uninstall ${app.packageName}", e)
+                        }
+                        closeDrawer()
+                    }
+                    2 -> { // Pause
+                        AppLogger.d("Drawer", "Pause requested for ${app.packageName} — not implemented, requires device admin")
+                        android.widget.Toast.makeText(this@HomeActivity, "Pause requires device admin — not yet available", android.widget.Toast.LENGTH_SHORT).show()
+                    }
+                    3 -> { // Hide
+                        AppLogger.d("Drawer", "Hide requested for ${app.packageName}")
+                        hideAppFromDrawer(app)
+                    }
+                }
+            }
+            .show()
+    }
+
+    private fun hideAppFromDrawer(app: AppInfo) {
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                val db = LauncherDatabase.getDatabase(this@HomeActivity)
+                val dao = db.workspaceDao()
+                var pref = dao.getAppPreference(app.packageName)
+                if (pref == null) {
+                    pref = AppPreference(
+                        packageName = app.packageName,
+                        isHidden = true,
+                        customIconPath = "",
+                        customLabel = ""
+                    )
+                } else {
+                    pref = pref.copy(isHidden = true)
+                }
+                dao.insertAppPreference(pref)
+
+                withContext(Dispatchers.Main) {
+                    hiddenAppsCache.add(app.packageName)
+                    filterDrawerApps(drawerSearchInput.text.toString())
+                    AppLogger.d("Drawer", "${app.packageName} is now hidden from drawer")
+                }
+            } catch (e: Exception) {
+                AppLogger.e("Drawer", "Failed to hide ${app.packageName}", e)
+            }
+        }
+    }
+
     inner class AppGridAdapter(
         private val apps: List<AppInfo>,
         private val onClick: (AppInfo) -> Unit
@@ -519,6 +609,13 @@ class HomeActivity : ComponentActivity() {
                     if (position != RecyclerView.NO_POSITION) {
                         onClick(apps[position])
                     }
+                }
+                view.setOnLongClickListener {
+                    val position = adapterPosition
+                    if (position != RecyclerView.NO_POSITION) {
+                        showAppContextMenu(apps[position])
+                    }
+                    true
                 }
             }
         }
