@@ -16,6 +16,7 @@ class LogViewerActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        AppLogger.d("LogViewerActivity", "STARTED: LogViewerActivity")
         window.statusBarColor = android.graphics.Color.BLACK
         window.navigationBarColor = android.graphics.Color.BLACK
         setContentView(R.layout.activity_log_viewer)
@@ -38,14 +39,17 @@ class LogViewerActivity : ComponentActivity() {
         }
 
         btnShare.setOnClickListener {
+            AppLogger.d("LogViewerActivity", "Share Logs clicked")
             shareCurrentLog()
         }
 
         btnClear.setOnClickListener {
+            AppLogger.d("LogViewerActivity", "Clear Logs clicked")
             clearLogs()
         }
 
         btnCopyLog.setOnClickListener {
+            AppLogger.d("LogViewerActivity", "Copy Logs clicked")
             val cm = getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
             val clip = android.content.ClipData.newPlainText("Launcher Log", tvLogContent.text)
             cm.setPrimaryClip(clip)
@@ -53,6 +57,7 @@ class LogViewerActivity : ComponentActivity() {
         }
 
         btnSaveLog.setOnClickListener {
+            AppLogger.d("LogViewerActivity", "Save Logs clicked")
             val text = tvLogContent.text.toString()
             if (text.isNotBlank()) {
                 val timestamp = System.currentTimeMillis()
@@ -61,6 +66,7 @@ class LogViewerActivity : ComponentActivity() {
                 if (dir != null) {
                     val file = File(dir, filename)
                     file.writeText(text)
+                    AppLogger.d("LogViewerActivity", "Logs saved to $filename")
                     Toast.makeText(this, "Saved: $filename", Toast.LENGTH_SHORT).show()
                 } else {
                     Toast.makeText(this, "Could not access Downloads directory", Toast.LENGTH_SHORT).show()
@@ -72,6 +78,16 @@ class LogViewerActivity : ComponentActivity() {
 
         // Load running log by default
         loadLogFile("launcher_log.txt")
+    }
+
+    override fun onResume() {
+        super.onResume()
+        AppLogger.d("LogViewerActivity", "RESUMED: LogViewerActivity")
+    }
+
+    override fun onPause() {
+        super.onPause()
+        AppLogger.d("LogViewerActivity", "PAUSED: LogViewerActivity")
     }
 
     private fun loadLogFile(filename: String) {

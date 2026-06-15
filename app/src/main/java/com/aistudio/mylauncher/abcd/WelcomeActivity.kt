@@ -23,6 +23,7 @@ class WelcomeActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         try {
             super.onCreate(savedInstanceState)
+            AppLogger.d("WelcomeActivity", "STARTED: WelcomeActivity")
             window.statusBarColor = android.graphics.Color.BLACK
             window.navigationBarColor = android.graphics.Color.BLACK
             
@@ -50,6 +51,7 @@ class WelcomeActivity : ComponentActivity() {
                         intent.data = Uri.parse("package:$packageName")
                         startActivity(intent)
                     } catch (e: Exception) {
+                        AppLogger.e("WelcomeActivity", "Initial permission request failed, trying fallback", e)
                         val intent = Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)
                         startActivity(intent)
                     }
@@ -72,6 +74,7 @@ class WelcomeActivity : ComponentActivity() {
                 finish()
             }
         } catch (e: Exception) {
+            AppLogger.e("WelcomeActivity", "WelcomeActivity onCreate crash", e)
             try {
                 val sw = java.io.StringWriter()
                 e.printStackTrace(java.io.PrintWriter(sw))
@@ -83,7 +86,13 @@ class WelcomeActivity : ComponentActivity() {
     
     override fun onResume() {
         super.onResume()
+        AppLogger.d("WelcomeActivity", "RESUMED: WelcomeActivity")
         checkPermissions()
+    }
+    
+    override fun onPause() {
+        super.onPause()
+        AppLogger.d("WelcomeActivity", "PAUSED: WelcomeActivity")
     }
     
     private fun checkPermissions() {

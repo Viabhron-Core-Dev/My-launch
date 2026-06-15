@@ -53,6 +53,7 @@ class HomeActivity : ComponentActivity() {
     private val drawerApps = mutableListOf<AppInfo>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        AppLogger.d("HomeActivity", "STARTED: HomeActivity")
         requestWindowFeature(Window.FEATURE_NO_TITLE)
         super.onCreate(savedInstanceState)
         
@@ -74,12 +75,12 @@ class HomeActivity : ComponentActivity() {
 
         val fabSwitchLauncher = findViewById<android.widget.ImageButton>(R.id.fabSwitchLauncher)
         fabSwitchLauncher.setOnClickListener {
-            android.util.Log.d("LauncherFAB", "FAB tapped")
+            AppLogger.d("HomeActivity", "FAB tapped, opening Settings")
             startActivity(Intent(this, SettingsActivity::class.java))
         }
         
         fabSwitchLauncher.setOnLongClickListener {
-            android.util.Log.d("LauncherFAB", "FAB long pressed")
+            AppLogger.d("HomeActivity", "FAB long pressed, opening Log Viewer")
             startActivity(Intent(this, LogViewerActivity::class.java))
             true
         }
@@ -100,6 +101,7 @@ class HomeActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
+        AppLogger.d("HomeActivity", "RESUMED: HomeActivity")
         val sharedPrefs = getSharedPreferences("launcher_prefs", Context.MODE_PRIVATE)
         val gridCols = sharedPrefs.getInt("grid_columns", 4)
         val gridRows = sharedPrefs.getInt("grid_rows", 5)
@@ -107,6 +109,7 @@ class HomeActivity : ComponentActivity() {
         val lastRows = sharedPrefs.getInt("last_grid_rows", -1)
 
         if (lastCols != -1 && lastRows != -1 && (gridCols != lastCols || gridRows != lastRows)) {
+            AppLogger.d("Seeding", "Grid dimensions changed from ${lastCols}x${lastRows} to ${gridCols}x${gridRows}. Re-seeding home screen.")
             lifecycleScope.launch {
                 withContext(Dispatchers.IO) {
                     val db = LauncherDatabase.getDatabase(this@HomeActivity)
@@ -119,6 +122,11 @@ class HomeActivity : ComponentActivity() {
                 loadInstalledApps() // Reloads and re-seeds
             }
         }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        AppLogger.d("HomeActivity", "PAUSED: HomeActivity")
     }
 
     private fun setupDrawer() {
@@ -145,6 +153,7 @@ class HomeActivity : ComponentActivity() {
     }
 
     private fun openDrawer() {
+        AppLogger.d("Drawer", "Drawer opened")
         isDrawerOpen = true
         drawerSearchInput.setText("")
         filterDrawerApps("")
@@ -156,6 +165,7 @@ class HomeActivity : ComponentActivity() {
     }
 
     private fun closeDrawer() {
+        AppLogger.d("Drawer", "Drawer closed")
         isDrawerOpen = false
         drawerRoot.animate()
             .translationY(drawerRoot.height.toFloat())
@@ -223,13 +233,16 @@ class HomeActivity : ComponentActivity() {
                         if (bitmap != null) {
                             val drawable = android.graphics.drawable.BitmapDrawable(resources, bitmap)
                             withContext(Dispatchers.Main) {
+                                AppLogger.d("Wallpaper", "Loaded custom wallpaper from $customPath")
                                 window.decorView.background = drawable
                             }
                             return@launch
                         }
                     } catch (e: Exception) {
-                        e.printStackTrace()
+                        AppLogger.e("Wallpaper", "Failed to load custom wallpaper", e)
                     }
+                } else {
+                    AppLogger.d("Wallpaper", "Custom wallpaper path set but file not found")
                 }
             }
             
@@ -238,13 +251,15 @@ class HomeActivity : ComponentActivity() {
                     val wallpaperManager = WallpaperManager.getInstance(this@HomeActivity)
                     val wallpaperDrawable = wallpaperManager.drawable
                     if (wallpaperDrawable != null) {
+                        AppLogger.d("Wallpaper", "Loaded system wallpaper via WallpaperManager")
                         window.decorView.background = wallpaperDrawable
                     } else {
+                        AppLogger.d("Wallpaper", "WallpaperManager returned null, falling back to DKGRAY")
                         window.decorView.setBackgroundColor(android.graphics.Color.DKGRAY)
                     }
                 } catch (e: Exception) {
+                    AppLogger.e("Wallpaper", "WallpaperManager failed, falling back to DKGRAY", e)
                     window.decorView.setBackgroundColor(android.graphics.Color.DKGRAY)
-                    e.printStackTrace()
                 }
             }
         }
@@ -268,6 +283,7 @@ class HomeActivity : ComponentActivity() {
             }
             allApps.clear()
             allApps.addAll(loadedApps)
+            AppLogger.d("HomeActivity", "Loaded ${loadedApps.size} installed apps")
 
             val appInfoMap = loadedApps.associateBy { Pair(it.packageName, it.activityName) }
 
@@ -280,6 +296,7 @@ class HomeActivity : ComponentActivity() {
 
                 var items = dao.getAllForContainer(0)
                 if (items.isEmpty()) {
+                    AppLogger.d("Seeding", "Home screen is empty, seeding default apps")
                     val newItems = mutableListOf<WorkspaceItem>()
                     val page0Apps = listOf(
                         "com.android.chrome",
@@ -356,6 +373,9 @@ class HomeActivity : ComponentActivity() {
                     
                     newItems.forEach { dao.insert(it) }
                     items = dao.getAllForContainer(0)
+                    AppLogger.d("Seeding", "Seeded ${page0Apps.size} apps to Page 0, ${page1Apps.size} apps to Page 1")
+                } else {
+                    AppLogger.d("Seeding", "Home screen already contains ${items.size} items, skipping seed")
                 }
 
                 sharedPrefs.edit()
@@ -466,17 +486,21 @@ class HomeActivity : ComponentActivity() {
                 }
             }
         }
+        AppLogger.d("HomeActivity", "Dock setup completed with $totalSlots slots")
     }
 
     private fun launchApp(app: AppInfo) {
         try {
             val intent = packageManager.getLaunchIntentForPackage(app.packageName)
             if (intent != null) {
+                AppLogger.d("HomeActivity", "Launching app: ${app.packageName}")
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 startActivity(intent)
+            } else {
+                AppLogger.d("HomeActivity", "Launch intent null for: ${app.packageName}")
             }
         } catch (e: Exception) {
-            e.printStackTrace()
+            AppLogger.e("HomeActivity", "Failed to launch app: ${app.packageName}", e)
         }
     }
 

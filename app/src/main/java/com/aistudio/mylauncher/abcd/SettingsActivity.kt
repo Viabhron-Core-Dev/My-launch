@@ -37,6 +37,7 @@ class SettingsActivity : ComponentActivity() {
                         .putString("custom_wallpaper_path", file.absolutePath)
                         .apply()
                         
+                    AppLogger.d("SettingsActivity", "Custom wallpaper set to ${file.absolutePath}")
                     withContext(Dispatchers.Main) {
                         Toast.makeText(this@SettingsActivity, "Custom wallpaper set. Returning to home...", Toast.LENGTH_SHORT).show()
                     }
@@ -47,8 +48,19 @@ class SettingsActivity : ComponentActivity() {
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+        AppLogger.d("SettingsActivity", "RESUMED: SettingsActivity")
+    }
+
+    override fun onPause() {
+        super.onPause()
+        AppLogger.d("SettingsActivity", "PAUSED: SettingsActivity")
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        AppLogger.d("SettingsActivity", "STARTED: SettingsActivity")
         window.statusBarColor = android.graphics.Color.BLACK
         window.navigationBarColor = android.graphics.Color.BLACK
         setContentView(R.layout.activity_settings)
@@ -70,6 +82,7 @@ class SettingsActivity : ComponentActivity() {
             override fun onStartTrackingTouch(seekBar: SeekBar?) {}
             override fun onStopTrackingTouch(seekBar: SeekBar?) {
                 val value = (seekBar?.progress ?: 0) + 3
+                AppLogger.d("SettingsActivity", "Grid columns changed to: $value")
                 prefs.edit().putInt("grid_columns", value).apply()
             }
         })
@@ -89,6 +102,7 @@ class SettingsActivity : ComponentActivity() {
             override fun onStartTrackingTouch(seekBar: SeekBar?) {}
             override fun onStopTrackingTouch(seekBar: SeekBar?) {
                 val value = (seekBar?.progress ?: 0) + 4
+                AppLogger.d("SettingsActivity", "Grid rows changed to: $value")
                 prefs.edit().putInt("grid_rows", value).apply()
             }
         })
@@ -103,6 +117,7 @@ class SettingsActivity : ComponentActivity() {
         }
         rgDockCount.setOnCheckedChangeListener { _, checkedId ->
             val count = if (checkedId == R.id.rbDock5) 5 else 4
+            AppLogger.d("SettingsActivity", "Dock count changed to: $count")
             prefs.edit().putInt("dock_count", count).apply()
         }
 
@@ -110,6 +125,7 @@ class SettingsActivity : ComponentActivity() {
         val switchDockDivider = findViewById<Switch>(R.id.switchDockDivider)
         switchDockDivider.isChecked = prefs.getBoolean("dock_divider", false)
         switchDockDivider.setOnCheckedChangeListener { _, isChecked ->
+            AppLogger.d("SettingsActivity", "Dock divider changed to: $isChecked")
             prefs.edit().putBoolean("dock_divider", isChecked).apply()
         }
 
@@ -127,6 +143,7 @@ class SettingsActivity : ComponentActivity() {
                 R.id.rbIconLarge -> "large"
                 else -> "medium"
             }
+            AppLogger.d("SettingsActivity", "Icon size changed to: $size")
             prefs.edit().putString("icon_size", size).apply()
         }
 
@@ -137,6 +154,7 @@ class SettingsActivity : ComponentActivity() {
         // Clear Setup Flag
         val btnClearSetup = findViewById<Button>(R.id.btnClearSetup)
         btnClearSetup.setOnClickListener {
+            AppLogger.d("SettingsActivity", "Clear setup flag clicked")
             // using "app_prefs" per WelcomeActivity
             val appPrefs = getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
             appPrefs.edit().remove("setup_complete").apply()
@@ -151,6 +169,7 @@ class SettingsActivity : ComponentActivity() {
                 .setTitle("Clear home screen?")
                 .setMessage("All home screen icons will be removed. Apps remain in the drawer.")
                 .setPositiveButton("Clear") { _, _ ->
+                    AppLogger.d("SettingsActivity", "Clear home screen confirmed")
                     lifecycleScope.launch(Dispatchers.IO) {
                         val db = LauncherDatabase.getDatabase(this@SettingsActivity)
                         db.workspaceDao().clearHomeScreen()
@@ -162,6 +181,7 @@ class SettingsActivity : ComponentActivity() {
 
         val btnSetWallpaper = findViewById<Button>(R.id.btnSetWallpaper)
         btnSetWallpaper.setOnClickListener {
+            AppLogger.d("SettingsActivity", "Set Wallpaper clicked")
             wallpaperPickerLauncher.launch("image/*")
         }
         btnSetWallpaper.setOnLongClickListener {
@@ -170,6 +190,7 @@ class SettingsActivity : ComponentActivity() {
             if (path != null) {
                 File(path).delete()
                 launcherPrefs.edit().remove("custom_wallpaper_path").apply()
+                AppLogger.d("SettingsActivity", "Custom wallpaper cleared")
                 Toast.makeText(this, "Custom wallpaper cleared", Toast.LENGTH_SHORT).show()
             } else {
                 Toast.makeText(this, "No custom wallpaper to clear", Toast.LENGTH_SHORT).show()
