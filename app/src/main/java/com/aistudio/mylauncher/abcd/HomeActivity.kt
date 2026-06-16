@@ -1,5 +1,4 @@
 package com.aistudio.mylauncher.abcd
-// debug-v15
 
 import android.app.WallpaperManager
 import android.content.Intent
