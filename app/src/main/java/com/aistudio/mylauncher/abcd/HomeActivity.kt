@@ -429,9 +429,14 @@ class HomeActivity : ComponentActivity() {
         gridCols: Int,
         gridRows: Int
     ) {
-        viewPager.adapter = HomePageAdapter(pageItemsList, appInfoMap, gridCols, gridRows) { appInfo ->
-            launchApp(appInfo)
-        }
+        viewPager.adapter = HomePageAdapter(pageItemsList, appInfoMap, gridCols, gridRows,
+            onClick = { appInfo ->
+                launchApp(appInfo)
+            },
+            onAppDropped = { appInfo, pageIndex, cellX, cellY ->
+                onAppDropped(appInfo, pageIndex, cellX, cellY)
+            }
+        )
         setupPageIndicators(pageItemsList.size)
         viewPager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
             override fun onPageSelected(position: Int) {
@@ -520,48 +525,93 @@ class HomeActivity : ComponentActivity() {
         }
     }
 
-    private fun showAppContextMenu(app: AppInfo) {
-        AppLogger.d("Drawer", "Long-press context menu shown for ${app.packageName}")
-        val options = arrayOf("App info", "Uninstall", "Pause", "Hide from drawer")
-        android.app.AlertDialog.Builder(this)
-            .setTitle(app.label)
-            .setItems(options) { _, which ->
-                when (which) {
-                    0 -> { // App info
-                        AppLogger.d("Drawer", "App info requested for ${app.packageName}")
-                        try {
-                            val intent = Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                                data = android.net.Uri.fromParts("package", app.packageName, null)
-                            }
-                            startActivity(intent)
-                        } catch (e: Exception) {
-                            AppLogger.e("Drawer", "Failed to open app info for ${app.packageName}", e)
-                        }
-                        closeDrawer()
-                    }
-                    1 -> { // Uninstall
-                        AppLogger.d("Drawer", "Uninstall requested for ${app.packageName}")
-                        try {
-                            val intent = Intent(Intent.ACTION_DELETE).apply {
-                                data = android.net.Uri.fromParts("package", app.packageName, null)
-                            }
-                            startActivity(intent)
-                        } catch (e: Exception) {
-                            AppLogger.e("Drawer", "Failed to uninstall ${app.packageName}", e)
-                        }
-                        closeDrawer()
-                    }
-                    2 -> { // Pause
-                        AppLogger.d("Drawer", "Pause requested for ${app.packageName} — not implemented, requires device admin")
-                        android.widget.Toast.makeText(this@HomeActivity, "Pause requires device admin — not yet available", android.widget.Toast.LENGTH_SHORT).show()
-                    }
-                    3 -> { // Hide
-                        AppLogger.d("Drawer", "Hide requested for ${app.packageName}")
-                        hideAppFromDrawer(app)
-                    }
-                }
+    private fun onAppDropped(appInfo: AppInfo, pageIndex: Int, cellX: Int, cellY: Int) {
+        AppLogger.d("Drag", "App ${appInfo.packageName} dropped at page=$pageIndex cellX=$cellX cellY=$cellY")
+        lifecycleScope.launch(Dispatchers.IO) {
+            val db = LauncherDatabase.getDatabase(this@HomeActivity)
+            val dao = db.workspaceDao()
+            dao.insert(
+                WorkspaceItem(
+                    itemType = 0,
+                    container = 0,
+                    containerId = -1L,
+                    packageName = appInfo.packageName,
+                    activityName = appInfo.activityName,
+                    title = appInfo.label.toString(),
+                    customIconPath = "",
+                    appWidgetId = -1,
+                    spanX = 1,
+                    spanY = 1,
+                    cellX = cellX,
+                    cellY = cellY,
+                    pageIndex = pageIndex
+                )
+            )
+            withContext(Dispatchers.Main) {
+                loadInstalledApps() // reloads and refreshes home grid
             }
-            .show()
+        }
+    }
+
+    private fun showAppContextMenu(app: AppInfo, anchorView: View) {
+        AppLogger.d("Drawer", "Long-press context menu shown for ${app.packageName}")
+        val popupMenu = android.widget.PopupMenu(this, anchorView)
+        popupMenu.menu.add(0, 0, 0, "Add to home screen")
+        popupMenu.menu.add(0, 1, 1, "App info")
+        popupMenu.menu.add(0, 2, 2, "Uninstall")
+        popupMenu.menu.add(0, 3, 3, "Pause")
+        popupMenu.menu.add(0, 4, 4, "Hide from drawer")
+
+        popupMenu.setOnMenuItemClickListener { item ->
+            when (item.itemId) {
+                0 -> { // Add to home screen
+                    AppLogger.d("Drag", "Add to home screen requested for ${app.packageName}")
+                    closeDrawer()
+                    val clipData = android.content.ClipData.newPlainText("app_package", app.packageName)
+                    val shadowBuilder = View.DragShadowBuilder(anchorView)
+                    anchorView.startDragAndDrop(clipData, shadowBuilder, app, 0)
+                    true
+                }
+                1 -> { // App info
+                    AppLogger.d("Drawer", "App info requested for ${app.packageName}")
+                    try {
+                        val intent = Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                            data = android.net.Uri.fromParts("package", app.packageName, null)
+                        }
+                        startActivity(intent)
+                    } catch (e: Exception) {
+                        AppLogger.e("Drawer", "Failed to open app info for ${app.packageName}", e)
+                    }
+                    closeDrawer()
+                    true
+                }
+                2 -> { // Uninstall
+                    AppLogger.d("Drawer", "Uninstall requested for ${app.packageName}")
+                    try {
+                        val intent = Intent(Intent.ACTION_DELETE).apply {
+                            data = android.net.Uri.fromParts("package", app.packageName, null)
+                        }
+                        startActivity(intent)
+                    } catch (e: Exception) {
+                        AppLogger.e("Drawer", "Failed to uninstall ${app.packageName}", e)
+                    }
+                    closeDrawer()
+                    true
+                }
+                3 -> { // Pause
+                    AppLogger.d("Drawer", "Pause requested for ${app.packageName} — not implemented, requires device admin")
+                    android.widget.Toast.makeText(this@HomeActivity, "Pause requires device admin — not yet available", android.widget.Toast.LENGTH_SHORT).show()
+                    true
+                }
+                4 -> { // Hide
+                    AppLogger.d("Drawer", "Hide requested for ${app.packageName}")
+                    hideAppFromDrawer(app)
+                    true
+                }
+                else -> false
+            }
+        }
+        popupMenu.show()
     }
 
     private fun hideAppFromDrawer(app: AppInfo) {
@@ -612,7 +662,7 @@ class HomeActivity : ComponentActivity() {
                 view.setOnLongClickListener {
                     val position = adapterPosition
                     if (position != RecyclerView.NO_POSITION) {
-                        showAppContextMenu(apps[position])
+                        showAppContextMenu(apps[position], view)
                     }
                     true
                 }

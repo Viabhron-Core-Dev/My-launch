@@ -13,7 +13,8 @@ class HomePageAdapter(
     private val appInfoMap: Map<Pair<String, String>, AppInfo>,
     private val gridColumns: Int,
     private val gridRows: Int,
-    private val onClick: (AppInfo) -> Unit
+    private val onClick: (AppInfo) -> Unit,
+    private val onAppDropped: (AppInfo, pageIndex: Int, cellX: Int, cellY: Int) -> Unit
 ) : RecyclerView.Adapter<HomePageAdapter.PageViewHolder>() {
 
     inner class PageViewHolder(view: View) : RecyclerView.ViewHolder(view) {
@@ -32,7 +33,7 @@ class HomePageAdapter(
 
     override fun onBindViewHolder(holder: PageViewHolder, position: Int) {
         val itemsForPage = pageItemsList[position]
-        holder.recyclerView.adapter = HomeGridAdapter(itemsForPage, appInfoMap, gridRows, onClick)
+        holder.recyclerView.adapter = HomeGridAdapter(itemsForPage, appInfoMap, gridColumns, gridRows, position, onClick, onAppDropped)
     }
 
     override fun getItemCount(): Int = pageItemsList.size
@@ -41,8 +42,11 @@ class HomePageAdapter(
 class HomeGridAdapter(
     private val items: List<WorkspaceItem?>,
     private val appInfoMap: Map<Pair<String, String>, AppInfo>,
+    private val gridColumns: Int,
     private val gridRows: Int,
-    private val onClick: (AppInfo) -> Unit
+    private val pageIndex: Int,
+    private val onClick: (AppInfo) -> Unit,
+    private val onAppDropped: (AppInfo, Int, Int, Int) -> Unit
 ) : RecyclerView.Adapter<HomeGridAdapter.CellViewHolder>() {
 
     inner class CellViewHolder(view: View) : RecyclerView.ViewHolder(view) {
@@ -99,6 +103,35 @@ class HomeGridAdapter(
 
     override fun onBindViewHolder(holder: CellViewHolder, position: Int) {
         val item = items[position]
+        val cellX = position % gridColumns
+        val cellY = position / gridColumns
+        
+        holder.itemView.setOnDragListener { view, event ->
+            when (event.action) {
+                android.view.DragEvent.ACTION_DRAG_ENTERED -> {
+                    if (item == null) {
+                        view.setBackgroundColor(0x33FFFFFF)
+                    }
+                    true
+                }
+                android.view.DragEvent.ACTION_DRAG_EXITED, android.view.DragEvent.ACTION_DRAG_ENDED -> {
+                    view.setBackgroundColor(android.graphics.Color.TRANSPARENT)
+                    true
+                }
+                android.view.DragEvent.ACTION_DROP -> {
+                    view.setBackgroundColor(android.graphics.Color.TRANSPARENT)
+                    if (item == null) {
+                        val droppedAppInfo = event.localState as? AppInfo
+                        if (droppedAppInfo != null) {
+                            onAppDropped(droppedAppInfo, pageIndex, cellX, cellY)
+                        }
+                    }
+                    item == null
+                }
+                else -> true
+            }
+        }
+
         if (item == null) {
             holder.itemView.visibility = View.INVISIBLE
             holder.itemView.setOnClickListener(null)
