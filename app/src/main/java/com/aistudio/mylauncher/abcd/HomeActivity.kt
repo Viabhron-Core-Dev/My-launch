@@ -566,10 +566,10 @@ class HomeActivity : ComponentActivity() {
             when (item.itemId) {
                 0 -> { // Add to home screen
                     AppLogger.d("Drag", "Add to home screen requested for ${app.packageName}")
-                    closeDrawer()
                     val clipData = android.content.ClipData.newPlainText("app_package", app.packageName)
                     val shadowBuilder = View.DragShadowBuilder(anchorView)
                     anchorView.startDragAndDrop(clipData, shadowBuilder, app, 0)
+                    closeDrawer()
                     true
                 }
                 1 -> { // App info
