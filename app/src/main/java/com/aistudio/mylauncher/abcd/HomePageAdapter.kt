@@ -14,7 +14,8 @@ class HomePageAdapter(
     private val gridColumns: Int,
     private val gridRows: Int,
     private val onClick: (AppInfo) -> Unit,
-    private val onAppDropped: (AppInfo, pageIndex: Int, cellX: Int, cellY: Int) -> Unit
+    private val onAppDropped: (AppInfo, pageIndex: Int, cellX: Int, cellY: Int) -> Unit,
+    private val onEmptyCellLongPressed: (pageIndex: Int, cellX: Int, cellY: Int, anchorView: View) -> Unit
 ) : RecyclerView.Adapter<HomePageAdapter.PageViewHolder>() {
 
     inner class PageViewHolder(view: View) : RecyclerView.ViewHolder(view) {
@@ -33,7 +34,7 @@ class HomePageAdapter(
 
     override fun onBindViewHolder(holder: PageViewHolder, position: Int) {
         val itemsForPage = pageItemsList[position]
-        holder.recyclerView.adapter = HomeGridAdapter(itemsForPage, appInfoMap, gridColumns, gridRows, position, onClick, onAppDropped)
+        holder.recyclerView.adapter = HomeGridAdapter(itemsForPage, appInfoMap, gridColumns, gridRows, position, onClick, onAppDropped, onEmptyCellLongPressed)
     }
 
     override fun getItemCount(): Int = pageItemsList.size
@@ -46,7 +47,8 @@ class HomeGridAdapter(
     private val gridRows: Int,
     private val pageIndex: Int,
     private val onClick: (AppInfo) -> Unit,
-    private val onAppDropped: (AppInfo, Int, Int, Int) -> Unit
+    private val onAppDropped: (AppInfo, Int, Int, Int) -> Unit,
+    private val onEmptyCellLongPressed: (Int, Int, Int, View) -> Unit
 ) : RecyclerView.Adapter<HomeGridAdapter.CellViewHolder>() {
 
     inner class CellViewHolder(view: View) : RecyclerView.ViewHolder(view) {
@@ -65,6 +67,19 @@ class HomeGridAdapter(
                         }
                     }
                 }
+            }
+            view.setOnLongClickListener {
+                val position = adapterPosition
+                if (position != RecyclerView.NO_POSITION) {
+                    val item = items[position]
+                    if (item == null) {
+                        val cellX = position % gridColumns
+                        val cellY = position / gridColumns
+                        onEmptyCellLongPressed(pageIndex, cellX, cellY, view)
+                        return@setOnLongClickListener true
+                    }
+                }
+                false
             }
         }
     }

@@ -435,6 +435,9 @@ class HomeActivity : ComponentActivity() {
             },
             onAppDropped = { appInfo, pageIndex, cellX, cellY ->
                 onAppDropped(appInfo, pageIndex, cellX, cellY)
+            },
+            onEmptyCellLongPressed = { pageIndex, cellX, cellY, anchorView ->
+                onEmptyCellLongPressed(pageIndex, cellX, cellY, anchorView)
             }
         )
 
@@ -567,6 +570,82 @@ class HomeActivity : ComponentActivity() {
                 loadInstalledApps() // reloads and refreshes home grid
             }
         }
+    }
+
+    private fun onEmptyCellLongPressed(pageIndex: Int, cellX: Int, cellY: Int, anchorView: View) {
+        val popupMenu = android.widget.PopupMenu(this, anchorView)
+        popupMenu.menu.add(0, 0, 0, "Add App")
+        popupMenu.menu.add(0, 1, 1, "Add Folder")
+        popupMenu.menu.add(0, 2, 2, "Add Widget")
+
+        popupMenu.setOnMenuItemClickListener { item ->
+            when (item.itemId) {
+                0 -> {
+                    showAppPicker(pageIndex, cellX, cellY)
+                    true
+                }
+                1 -> {
+                    android.widget.Toast.makeText(this, "Folders coming in a future update", android.widget.Toast.LENGTH_SHORT).show()
+                    true
+                }
+                2 -> {
+                    android.widget.Toast.makeText(this, "Widgets coming in a future update", android.widget.Toast.LENGTH_SHORT).show()
+                    true
+                }
+                else -> false
+            }
+        }
+        popupMenu.show()
+    }
+
+    private fun showAppPicker(pageIndex: Int, cellX: Int, cellY: Int) {
+        val visibleApps = allApps.filter { it.packageName !in hiddenAppsCache }
+        
+        val recyclerView = RecyclerView(this).apply {
+            layoutParams = ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            )
+            layoutManager = androidx.recyclerview.widget.GridLayoutManager(this@HomeActivity, 4)
+            setPadding(32, 32, 32, 32)
+        }
+        
+        val dialog = android.app.AlertDialog.Builder(this)
+            .setTitle("Select App")
+            .setView(recyclerView)
+            .create()
+
+        recyclerView.adapter = AppGridAdapter(visibleApps) { appInfo ->
+            dialog.dismiss()
+            
+            AppLogger.d("HomeScreen", "App ${appInfo.packageName} added via long-press picker at page=$pageIndex cellX=$cellX cellY=$cellY")
+            lifecycleScope.launch(Dispatchers.IO) {
+                val db = LauncherDatabase.getDatabase(this@HomeActivity)
+                val dao = db.workspaceDao()
+                dao.insert(
+                    WorkspaceItem(
+                        itemType = 0,
+                        container = 0,
+                        containerId = -1L,
+                        packageName = appInfo.packageName,
+                        activityName = appInfo.activityName,
+                        title = appInfo.label.toString(),
+                        customIconPath = "",
+                        appWidgetId = -1,
+                        spanX = 1,
+                        spanY = 1,
+                        cellX = cellX,
+                        cellY = cellY,
+                        pageIndex = pageIndex
+                    )
+                )
+                withContext(Dispatchers.Main) {
+                    loadInstalledApps() // reloads and refreshes home grid
+                }
+            }
+        }
+        
+        dialog.show()
     }
 
     private fun showAppContextMenu(app: AppInfo, anchorView: View) {
