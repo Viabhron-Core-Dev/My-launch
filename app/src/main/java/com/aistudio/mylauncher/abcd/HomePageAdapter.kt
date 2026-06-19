@@ -108,6 +108,7 @@ class HomeGridAdapter(
         
         holder.itemView.setOnDragListener { view, event ->
             when (event.action) {
+                android.view.DragEvent.ACTION_DRAG_STARTED -> true // Register as drop target
                 android.view.DragEvent.ACTION_DRAG_ENTERED -> {
                     if (item == null) {
                         view.setBackgroundColor(0x33FFFFFF)

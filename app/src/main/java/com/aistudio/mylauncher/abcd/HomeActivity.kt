@@ -437,6 +437,22 @@ class HomeActivity : ComponentActivity() {
                 onAppDropped(appInfo, pageIndex, cellX, cellY)
             }
         )
+
+        viewPager.setOnDragListener { _, event ->
+            when (event.action) {
+                android.view.DragEvent.ACTION_DRAG_STARTED -> false
+                else -> false
+            }
+        }
+
+        val vpRecyclerView = viewPager.getChildAt(0) as? RecyclerView
+        vpRecyclerView?.setOnDragListener { _, event ->
+            when (event.action) {
+                android.view.DragEvent.ACTION_DRAG_STARTED -> false
+                else -> false
+            }
+        }
+
         setupPageIndicators(pageItemsList.size)
         viewPager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
             override fun onPageSelected(position: Int) {
