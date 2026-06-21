@@ -29,7 +29,7 @@ import android.text.TextWatcher
 import android.widget.EditText
 import android.view.inputmethod.InputMethodManager
 import android.content.Context
-import androidx.viewpager2.widget.ViewPager2
+// Removed ViewPager2 import
 import android.graphics.drawable.GradientDrawable
 
 data class AppInfo(
@@ -41,7 +41,7 @@ data class AppInfo(
 
 class HomeActivity : ComponentActivity() {
 
-    private lateinit var viewPager: ViewPager2
+    private lateinit var workspace: Workspace
     private lateinit var pageIndicatorContainer: LinearLayout
     private lateinit var dockContainer: LinearLayout
     private val allApps = mutableListOf<AppInfo>()
@@ -64,7 +64,7 @@ class HomeActivity : ComponentActivity() {
 
         setContentView(R.layout.activity_home)
 
-        viewPager = findViewById(R.id.viewPager)
+        workspace = findViewById(R.id.workspace)
         pageIndicatorContainer = findViewById(R.id.pageIndicatorContainer)
         dockContainer = findViewById(R.id.dockContainer)
 
@@ -416,52 +416,62 @@ class HomeActivity : ComponentActivity() {
                 }
 
                 withContext(Dispatchers.Main) {
-                    setupViewPager(pageItemsList, appInfoMap, gridCols, gridRows)
+                    setupWorkspace(pageItemsList, appInfoMap, gridCols, gridRows)
                     setupDock()
                 }
             }
         }
     }
 
-    private fun setupViewPager(
+    private fun setupWorkspace(
         pageItemsList: List<List<WorkspaceItem?>>,
         appInfoMap: Map<Pair<String, String>, AppInfo>,
         gridCols: Int,
         gridRows: Int
     ) {
-        viewPager.adapter = HomePageAdapter(pageItemsList, appInfoMap, gridCols, gridRows,
-            onClick = { appInfo ->
-                launchApp(appInfo)
-            },
-            onAppDropped = { appInfo, pageIndex, cellX, cellY ->
-                onAppDropped(appInfo, pageIndex, cellX, cellY)
-            },
-            onEmptyCellLongPressed = { pageIndex, cellX, cellY, anchorView ->
-                onEmptyCellLongPressed(pageIndex, cellX, cellY, anchorView)
-            }
-        )
+        workspace.removeAllViews()
 
-        viewPager.setOnDragListener { _, event ->
-            when (event.action) {
-                android.view.DragEvent.ACTION_DRAG_STARTED -> false
-                else -> false
+        for (pageIndex in pageItemsList.indices) {
+            val cellLayout = CellLayout(this, gridCols, gridRows)
+            val itemsForPage = pageItemsList[pageIndex]
+
+            for (itemIndex in itemsForPage.indices) {
+                val item = itemsForPage[itemIndex]
+                if (item != null) {
+                    val appInfoKey = Pair(item.packageName, item.activityName)
+                    val appInfo = appInfoMap[appInfoKey]
+
+                    if (appInfo != null) {
+                        val view = layoutInflater.inflate(R.layout.item_app_icon, cellLayout, false)
+                        val iconView = view.findViewById<android.widget.ImageView>(R.id.appIcon)
+                        val labelView = view.findViewById<android.widget.TextView>(R.id.appName)
+
+                        val expectedIconPath = java.io.File(filesDir, "custom_icon_${item.packageName}.png")
+                        if (expectedIconPath.exists()) {
+                            iconView.setImageURI(android.net.Uri.fromFile(expectedIconPath))
+                        } else {
+                            iconView.setImageDrawable(appInfo.resolveInfo.loadIcon(packageManager))
+                        }
+
+                        labelView.text = item.title
+
+                        view.setOnClickListener {
+                            launchApp(appInfo)
+                        }
+
+                        cellLayout.addItemAt(view, item.cellX, item.cellY)
+                    }
+                }
             }
+            workspace.addView(cellLayout)
         }
 
-        val vpRecyclerView = viewPager.getChildAt(0) as? RecyclerView
-        vpRecyclerView?.setOnDragListener { _, event ->
-            when (event.action) {
-                android.view.DragEvent.ACTION_DRAG_STARTED -> false
-                else -> false
-            }
-        }
+        // Hide page indicators for now as requested
+        pageIndicatorContainer.visibility = View.GONE
 
-        setupPageIndicators(pageItemsList.size)
-        viewPager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
-            override fun onPageSelected(position: Int) {
-                updatePageIndicators(position)
-            }
-        })
+        // Removed ViewPager2-specific logic here:
+        // setupPageIndicators(pageItemsList.size)
+        // viewPager.registerOnPageChangeCallback(...)
     }
 
     private fun setupPageIndicators(count: Int) {
