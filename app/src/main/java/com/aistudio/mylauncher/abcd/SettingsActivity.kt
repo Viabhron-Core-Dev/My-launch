@@ -73,7 +73,7 @@ class SettingsActivity : ComponentActivity() {
         val textColumns = findViewById<TextView>(R.id.textColumns)
         val seekColumns = findViewById<SeekBar>(R.id.seekColumns)
         val columns = prefs.getInt("grid_columns", 4)
-        seekColumns.max = 3 // 0 to 3 corresponds to 3 to 6
+        seekColumns.max = 5 // 0 to 5 corresponds to 3 to 8
         seekColumns.progress = columns - 3
         textColumns.text = "Grid columns: $columns"
         seekColumns.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {

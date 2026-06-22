@@ -463,15 +463,19 @@ class HomeActivity : ComponentActivity() {
                     }
                 }
             }
+            
+            cellLayout.onEmptyCellLongPressed = { cellX, cellY ->
+                onEmptyCellLongPressed(pageIndex, cellX, cellY, cellLayout)
+            }
+            
             workspace.addView(cellLayout)
         }
 
-        // Hide page indicators for now as requested
-        pageIndicatorContainer.visibility = View.GONE
-
-        // Removed ViewPager2-specific logic here:
-        // setupPageIndicators(pageItemsList.size)
-        // viewPager.registerOnPageChangeCallback(...)
+        setupPageIndicators(pageItemsList.size)
+        workspace.onPageChanged = { position ->
+            updatePageIndicators(position)
+        }
+        pageIndicatorContainer.visibility = View.VISIBLE
     }
 
     private fun setupPageIndicators(count: Int) {

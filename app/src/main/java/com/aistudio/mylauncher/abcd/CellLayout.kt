@@ -10,6 +10,33 @@ class CellLayout(
     private val gridRows: Int
 ) : ViewGroup(context) {
 
+    private val padding = (4 * resources.displayMetrics.density).toInt()
+    private val occupiedCells = mutableSetOf<Pair<Int, Int>>()
+    
+    var onEmptyCellLongPressed: ((cellX: Int, cellY: Int) -> Unit)? = null
+
+    private val gestureDetector = android.view.GestureDetector(context, object : android.view.GestureDetector.SimpleOnGestureListener() {
+        override fun onLongPress(e: android.view.MotionEvent) {
+            val cellWidth = if (gridColumns > 0) width / gridColumns else 1
+            val cellHeight = if (gridRows > 0) height / gridRows else 1
+
+            val cellX = (e.x / cellWidth).toInt().coerceIn(0, gridColumns - 1)
+            val cellY = (e.y / cellHeight).toInt().coerceIn(0, gridRows - 1)
+
+            if (!occupiedCells.contains(Pair(cellX, cellY))) {
+                onEmptyCellLongPressed?.invoke(cellX, cellY)
+            }
+        }
+    })
+
+    override fun onTouchEvent(event: android.view.MotionEvent): Boolean {
+        var handled = gestureDetector.onTouchEvent(event)
+        if (event.action == android.view.MotionEvent.ACTION_DOWN) {
+            handled = true
+        }
+        return handled || super.onTouchEvent(event)
+    }
+
     class LayoutParams(
         val cellX: Int,
         val cellY: Int,
@@ -20,10 +47,12 @@ class CellLayout(
     fun addItemAt(view: View, cellX: Int, cellY: Int) {
         val params = LayoutParams(cellX, cellY)
         view.layoutParams = params
+        occupiedCells.add(Pair(cellX, cellY))
         addView(view)
     }
 
     fun clear() {
+        occupiedCells.clear()
         removeAllViews()
     }
 
@@ -59,7 +88,7 @@ class CellLayout(
                 val lp = child.layoutParams as LayoutParams
                 val childLeft = lp.cellX * cellWidth
                 val childTop = lp.cellY * cellHeight
-                child.layout(childLeft, childTop, childLeft + cellWidth, childTop + cellHeight)
+                child.layout(childLeft + padding, childTop + padding, childLeft + cellWidth - padding, childTop + cellHeight - padding)
             }
         }
     }
