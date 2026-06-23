@@ -105,11 +105,11 @@ class HomeActivity : ComponentActivity() {
         AppLogger.d("HomeActivity", "RESUMED: HomeActivity")
         val sharedPrefs = getSharedPreferences("launcher_prefs", Context.MODE_PRIVATE)
         val gridCols = sharedPrefs.getInt("grid_columns", 4)
-        val gridRows = sharedPrefs.getInt("grid_rows", 5)
-        val lastCols = sharedPrefs.getInt("last_grid_columns", -1)
-        val lastRows = sharedPrefs.getInt("last_grid_rows", -1)
+        val gridRows = sharedPrefs.getInt("grid_rows", 8)
+        val lastCols = sharedPrefs.getInt("last_grid_columns", 4)
+        val lastRows = sharedPrefs.getInt("last_grid_rows", 8)
 
-        if (lastCols != -1 && lastRows != -1 && (gridCols != lastCols || gridRows != lastRows)) {
+        if (gridCols != lastCols || gridRows != lastRows) {
             AppLogger.d("Seeding", "Grid dimensions changed from ${lastCols}x${lastRows} to ${gridCols}x${gridRows}. Re-seeding home screen.")
             lifecycleScope.launch {
                 withContext(Dispatchers.IO) {
@@ -308,7 +308,7 @@ class HomeActivity : ComponentActivity() {
                 val dao = db.workspaceDao()
                 val sharedPrefs = getSharedPreferences("launcher_prefs", Context.MODE_PRIVATE)
                 val gridCols = sharedPrefs.getInt("grid_columns", 4)
-                val gridRows = sharedPrefs.getInt("grid_rows", 5)
+                val gridRows = sharedPrefs.getInt("grid_rows", 8)
 
                 var items = dao.getAllForContainer(0)
                 if (items.isEmpty()) {
@@ -445,6 +445,7 @@ class HomeActivity : ComponentActivity() {
                         val view = layoutInflater.inflate(R.layout.item_app_icon, cellLayout, false)
                         val iconView = view.findViewById<android.widget.ImageView>(R.id.appIcon)
                         val labelView = view.findViewById<android.widget.TextView>(R.id.appName)
+                        labelView.visibility = View.GONE
 
                         val expectedIconPath = java.io.File(filesDir, "custom_icon_${item.packageName}.png")
                         if (expectedIconPath.exists()) {

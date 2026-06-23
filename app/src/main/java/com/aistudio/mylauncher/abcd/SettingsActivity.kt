@@ -92,7 +92,7 @@ class SettingsActivity : ComponentActivity() {
         // Grid Rows
         val textRows = findViewById<TextView>(R.id.textRows)
         val seekRows = findViewById<SeekBar>(R.id.seekRows)
-        val rows = prefs.getInt("grid_rows", 5)
+        val rows = prefs.getInt("grid_rows", 8)
         seekRows.max = 4 // 0 to 4 corresponds to 4 to 8
         seekRows.progress = rows - 4
         textRows.text = "Grid rows per page: $rows"
