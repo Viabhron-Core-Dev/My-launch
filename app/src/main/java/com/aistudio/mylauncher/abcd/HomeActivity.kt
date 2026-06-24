@@ -447,6 +447,19 @@ class HomeActivity : ComponentActivity() {
                         val labelView = view.findViewById<android.widget.TextView>(R.id.appName)
                         labelView.visibility = View.GONE
 
+                        // Calculate cell dimensions based on screen size and grid config
+                        val screenWidth = resources.displayMetrics.widthPixels
+                        val screenHeight = resources.displayMetrics.heightPixels
+                        val cellWidth = screenWidth / gridCols
+                        val cellHeight = screenHeight / gridRows
+
+                        // Apply to icon — use 80% of the smaller cell dimension to leave breathing room
+                        val iconSize = (minOf(cellWidth, cellHeight) * 0.80f).toInt()
+                        val iconParams = iconView.layoutParams
+                        iconParams.width = iconSize
+                        iconParams.height = iconSize
+                        iconView.layoutParams = iconParams
+
                         val expectedIconPath = java.io.File(filesDir, "custom_icon_${item.packageName}.png")
                         if (expectedIconPath.exists()) {
                             iconView.setImageURI(android.net.Uri.fromFile(expectedIconPath))
