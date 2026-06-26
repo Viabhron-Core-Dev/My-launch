@@ -91,7 +91,7 @@ class Workspace @JvmOverloads constructor(
                 val xDiff = abs(x - lastMotionX)
                 val yDiff = abs(y - lastMotionY)
 
-                if (xDiff > touchSlop && xDiff > yDiff * 1.5f) {
+                if (xDiff > touchSlop / 2 && xDiff > yDiff) {
                     isBeingDragged = true
                     lastMotionX = x
                     lastMotionY = y

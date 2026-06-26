@@ -13,7 +13,7 @@ class CellLayout(
     private val padding = (4 * resources.displayMetrics.density).toInt()
     private val occupiedCells = mutableSetOf<Pair<Int, Int>>()
     
-    var onEmptyCellLongPressed: ((cellX: Int, cellY: Int) -> Unit)? = null
+    var onEmptyCellLongPressed: ((cellX: Int, cellY: Int, touchX: Float, touchY: Float) -> Unit)? = null
 
     private val gestureDetector = android.view.GestureDetector(context, object : android.view.GestureDetector.SimpleOnGestureListener() {
         override fun onLongPress(e: android.view.MotionEvent) {
@@ -24,7 +24,7 @@ class CellLayout(
             val cellY = (e.y / cellHeight).toInt().coerceIn(0, gridRows - 1)
 
             if (!occupiedCells.contains(Pair(cellX, cellY))) {
-                onEmptyCellLongPressed?.invoke(cellX, cellY)
+                onEmptyCellLongPressed?.invoke(cellX, cellY, e.x, e.y)
             }
         }
     })

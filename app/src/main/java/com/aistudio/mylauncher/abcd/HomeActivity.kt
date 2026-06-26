@@ -447,19 +447,6 @@ class HomeActivity : ComponentActivity() {
                         val labelView = view.findViewById<android.widget.TextView>(R.id.appName)
                         labelView.visibility = View.GONE
 
-                        // Calculate cell dimensions based on screen size and grid config
-                        val screenWidth = resources.displayMetrics.widthPixels
-                        val screenHeight = resources.displayMetrics.heightPixels
-                        val cellWidth = screenWidth / gridCols
-                        val cellHeight = screenHeight / gridRows
-
-                        // Apply to icon — use 80% of the smaller cell dimension to leave breathing room
-                        val iconSize = (minOf(cellWidth, cellHeight) * 0.80f).toInt()
-                        val iconParams = iconView.layoutParams
-                        iconParams.width = iconSize
-                        iconParams.height = iconSize
-                        iconView.layoutParams = iconParams
-
                         val expectedIconPath = java.io.File(filesDir, "custom_icon_${item.packageName}.png")
                         if (expectedIconPath.exists()) {
                             iconView.setImageURI(android.net.Uri.fromFile(expectedIconPath))
@@ -478,11 +465,33 @@ class HomeActivity : ComponentActivity() {
                 }
             }
             
-            cellLayout.onEmptyCellLongPressed = { cellX, cellY ->
-                onEmptyCellLongPressed(pageIndex, cellX, cellY, cellLayout)
+            cellLayout.onEmptyCellLongPressed = { cellX, cellY, touchX, touchY ->
+                onEmptyCellLongPressed(pageIndex, cellX, cellY, cellLayout, touchX, touchY)
             }
             
             workspace.addView(cellLayout)
+        }
+
+        workspace.post {
+            val actualWorkspaceHeight = workspace.height
+            val actualWorkspaceWidth = workspace.width
+            val cellWidth = actualWorkspaceWidth / gridCols
+            val cellHeight = actualWorkspaceHeight / gridRows
+            val iconSize = (minOf(cellWidth, cellHeight) * 0.75f).toInt()
+            
+            // Apply to all icon views across all CellLayouts
+            for (i in 0 until workspace.childCount) {
+                val cellLayout = workspace.getChildAt(i) as? CellLayout ?: continue
+                for (j in 0 until cellLayout.childCount) {
+                    val iconView = cellLayout.getChildAt(j)
+                        ?.findViewById<android.widget.ImageView>(R.id.appIcon) ?: continue
+                    val params = iconView.layoutParams
+                    params.width = iconSize
+                    params.height = iconSize
+                    iconView.layoutParams = params
+                    iconView.requestLayout()
+                }
+            }
         }
 
         setupPageIndicators(pageItemsList.size)
@@ -600,30 +609,36 @@ class HomeActivity : ComponentActivity() {
         }
     }
 
-    private fun onEmptyCellLongPressed(pageIndex: Int, cellX: Int, cellY: Int, anchorView: View) {
-        val popupMenu = android.widget.PopupMenu(this, anchorView)
+    private fun onEmptyCellLongPressed(
+        pageIndex: Int, cellX: Int, cellY: Int, 
+        cellLayout: CellLayout, touchX: Float, touchY: Float
+    ) {
+        // Create temporary invisible anchor view at touch position
+        val rootLayout = findViewById<androidx.constraintlayout.widget.ConstraintLayout>(R.id.rootLayout)
+        val anchor = View(this).apply {
+            layoutParams = androidx.constraintlayout.widget.ConstraintLayout.LayoutParams(1, 1)
+            x = touchX + cellLayout.x + (pageIndex * workspace.width) - workspace.scrollX
+            y = touchY + cellLayout.y + workspace.y
+            visibility = View.INVISIBLE
+        }
+        rootLayout.addView(anchor)
+        
+        val popupMenu = android.widget.PopupMenu(this, anchor)
         popupMenu.menu.add(0, 0, 0, "Add App")
         popupMenu.menu.add(0, 1, 1, "Add Folder")
         popupMenu.menu.add(0, 2, 2, "Add Widget")
-
+        popupMenu.setOnDismissListener { rootLayout.removeView(anchor) }
+        
         popupMenu.setOnMenuItemClickListener { item ->
             when (item.itemId) {
-                0 -> {
-                    showAppPicker(pageIndex, cellX, cellY)
-                    true
-                }
-                1 -> {
-                    android.widget.Toast.makeText(this, "Folders coming in a future update", android.widget.Toast.LENGTH_SHORT).show()
-                    true
-                }
-                2 -> {
-                    android.widget.Toast.makeText(this, "Widgets coming in a future update", android.widget.Toast.LENGTH_SHORT).show()
-                    true
-                }
+                0 -> { showAppPicker(pageIndex, cellX, cellY); true }
+                1 -> { android.widget.Toast.makeText(this, "Folders coming in a future update", android.widget.Toast.LENGTH_SHORT).show(); true }
+                2 -> { android.widget.Toast.makeText(this, "Widgets coming in a future update", android.widget.Toast.LENGTH_SHORT).show(); true }
                 else -> false
             }
         }
         popupMenu.show()
+        AppLogger.d("HomeScreen", "Empty cell long-press menu shown at page=$pageIndex cellX=$cellX cellY=$cellY")
     }
 
     private fun showAppPicker(pageIndex: Int, cellX: Int, cellY: Int) {
