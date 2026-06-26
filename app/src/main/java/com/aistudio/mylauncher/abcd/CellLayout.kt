@@ -10,7 +10,6 @@ class CellLayout(
     private val gridRows: Int
 ) : ViewGroup(context) {
 
-    private val padding = (4 * resources.displayMetrics.density).toInt()
     private val occupiedCells = mutableSetOf<Pair<Int, Int>>()
     
     var onEmptyCellLongPressed: ((cellX: Int, cellY: Int, touchX: Float, touchY: Float) -> Unit)? = null
@@ -88,7 +87,7 @@ class CellLayout(
                 val lp = child.layoutParams as LayoutParams
                 val childLeft = lp.cellX * cellWidth
                 val childTop = lp.cellY * cellHeight
-                child.layout(childLeft + padding, childTop + padding, childLeft + cellWidth - padding, childTop + cellHeight - padding)
+                child.layout(childLeft, childTop, childLeft + cellWidth, childTop + cellHeight)
             }
         }
     }

@@ -431,6 +431,23 @@ class HomeActivity : ComponentActivity() {
     ) {
         workspace.removeAllViews()
 
+        val displayMetrics = resources.displayMetrics
+        val screenWidth = displayMetrics.widthPixels
+
+        // Estimate available workspace height by subtracting known chrome
+        val statusBarHeight = resources.getDimensionPixelSize(
+            resources.getIdentifier("status_bar_height", "dimen", "android")
+        ).let { if (it > 0) it else (24 * displayMetrics.density).toInt() }
+        val navBarHeight = (56 * displayMetrics.density).toInt() // dock approx height
+        val pageIndicatorHeight = (24 * displayMetrics.density).toInt()
+        val availableHeight = displayMetrics.heightPixels - statusBarHeight - navBarHeight - pageIndicatorHeight
+
+        val cellWidth = screenWidth / gridCols
+        val cellHeight = availableHeight / gridRows
+
+        // Icon size: 70% of the smaller cell dimension, leaving room for padding
+        val iconSize = (minOf(cellWidth, cellHeight) * 0.70f).toInt()
+
         for (pageIndex in pageItemsList.indices) {
             val cellLayout = CellLayout(this, gridCols, gridRows)
             val itemsForPage = pageItemsList[pageIndex]
@@ -446,6 +463,11 @@ class HomeActivity : ComponentActivity() {
                         val iconView = view.findViewById<android.widget.ImageView>(R.id.appIcon)
                         val labelView = view.findViewById<android.widget.TextView>(R.id.appName)
                         labelView.visibility = View.GONE
+
+                        val iconParams = iconView.layoutParams
+                        iconParams.width = iconSize
+                        iconParams.height = iconSize
+                        iconView.layoutParams = iconParams
 
                         val expectedIconPath = java.io.File(filesDir, "custom_icon_${item.packageName}.png")
                         if (expectedIconPath.exists()) {
@@ -470,28 +492,6 @@ class HomeActivity : ComponentActivity() {
             }
             
             workspace.addView(cellLayout)
-        }
-
-        workspace.post {
-            val actualWorkspaceHeight = workspace.height
-            val actualWorkspaceWidth = workspace.width
-            val cellWidth = actualWorkspaceWidth / gridCols
-            val cellHeight = actualWorkspaceHeight / gridRows
-            val iconSize = (minOf(cellWidth, cellHeight) * 0.75f).toInt()
-            
-            // Apply to all icon views across all CellLayouts
-            for (i in 0 until workspace.childCount) {
-                val cellLayout = workspace.getChildAt(i) as? CellLayout ?: continue
-                for (j in 0 until cellLayout.childCount) {
-                    val iconView = cellLayout.getChildAt(j)
-                        ?.findViewById<android.widget.ImageView>(R.id.appIcon) ?: continue
-                    val params = iconView.layoutParams
-                    params.width = iconSize
-                    params.height = iconSize
-                    iconView.layoutParams = params
-                    iconView.requestLayout()
-                }
-            }
         }
 
         setupPageIndicators(pageItemsList.size)
