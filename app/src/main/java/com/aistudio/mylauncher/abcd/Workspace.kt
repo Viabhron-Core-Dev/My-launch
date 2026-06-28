@@ -138,21 +138,36 @@ class Workspace @JvmOverloads constructor(
     private fun snapToDestination() {
         val screenWidth = width
         val scrollX = scrollX
-        var targetPage = (scrollX + screenWidth / 2) / screenWidth
-        targetPage = targetPage.coerceIn(0, (childCount - 1).coerceAtLeast(0))
+        var targetPage = (scrollX + screenWidth / 3) / screenWidth
+        
+        targetPage = when {
+            targetPage > childCount - 1 -> 0
+            targetPage < 0 -> childCount - 1
+            else -> targetPage.coerceIn(0, (childCount - 1).coerceAtLeast(0))
+        }
+        
         snapToPage(targetPage)
     }
 
     private fun snapToPage(page: Int) {
         val newPage = page.coerceIn(0, (childCount - 1).coerceAtLeast(0))
-        val delta = (newPage * width) - scrollX
-        scroller.startScroll(scrollX, 0, delta, 0, 300)
-        invalidate()
+        val targetScrollX = newPage * width
+        val delta = targetScrollX - scrollX
         
-        if (currentPageIndex != newPage) {
+        // If wrapping across pages (large jump), scroll instantly — no animation
+        if (Math.abs(delta) > width * (childCount - 1) / 2) {
+            scrollTo(targetScrollX, 0)
             currentPageIndex = newPage
-            AppLogger.d("Workspace", "Page changed to $currentPageIndex")
+            AppLogger.d("Workspace", "Page wrapped to $currentPageIndex")
             onPageChanged?.invoke(currentPageIndex)
+        } else {
+            scroller.startScroll(scrollX, 0, delta, 0, 300)
+            invalidate()
+            if (currentPageIndex != newPage) {
+                currentPageIndex = newPage
+                AppLogger.d("Workspace", "Page changed to $currentPageIndex")
+                onPageChanged?.invoke(currentPageIndex)
+            }
         }
     }
 
